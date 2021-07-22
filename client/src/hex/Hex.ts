@@ -5,7 +5,7 @@ import type { HexAI, ReverseHexAI } from "src/hex/ai/BaseAI";
 import { RandomAI } from "src/hex/ai/RandomAI";
 import { MostWinningCellAI } from "src/hex/ai/MostWinningCellAI";
 
-import { SERVER_URL } from "src/components/HexOnline.svelte";
+import { SERVER_URL } from "src/hex/communication";
 
 export enum HexPlayerType {
   Local = "local",

@@ -5,7 +5,7 @@ import type { DarkHexAI, DarkReverseHexAI } from "src/hex/ai/BaseAI";
 import { RandomAI } from "src/hex/ai/RandomAI";
 import type { HexMoveInfo } from "src/hex/Hex";
 
-import { SERVER_URL } from "src/components/HexOnline.svelte";
+import { SERVER_URL } from "src/hex/communication";
 
 export enum DarkHexPlayerType {
   Local = "local",

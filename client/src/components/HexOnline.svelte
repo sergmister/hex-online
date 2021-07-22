@@ -1,11 +1,8 @@
-<script lang="ts" context="module">
-  export const SERVER_URL = "http://localhost:4322/";
-</script>
-
 <script lang="ts">
   import { onMount } from "svelte";
   import { io, Socket } from "socket.io-client";
 
+  import { SERVER_URL } from "src/hex/communication";
   import type { HexPlayerColor } from "src/hex/HexBoard";
   import type { HexPlayerType, ReverseHexPlayerType } from "src/hex/Hex";
   import type { DarkHexPlayerType, DarkReverseHexPlayerType } from "src/hex/DarkHex";
