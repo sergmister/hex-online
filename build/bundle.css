@@ -1,0 +1,15 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.gameui.svelte-wkr34e{display:flex;height:100vh;justify-content:flex-start;align-items:center;overflow:auto}.gameui.svelte-wkr34e::before,.gameui.svelte-wkr34e::after{content:"";margin:auto}.container.svelte-zzhrax.svelte-zzhrax{flex:8 0 240px;min-width:240px;height:100%;background-color:lightgreen}.container.svelte-zzhrax canvas.svelte-zzhrax{width:100%;height:100%;background-color:black}.container.svelte-lu88wi.svelte-lu88wi{flex:1 0 240px;max-width:320px;height:100%;background-color:lightblue}.container.svelte-lu88wi h2.svelte-lu88wi{text-align:center;font-size:2.4em}.container.svelte-lu88wi form.svelte-lu88wi{padding:20px}.container.svelte-lu88wi form .svelte-lu88wi{margin-top:2px}.container.svelte-1lvqdvn.svelte-1lvqdvn{flex:1 0 240px;max-width:320px;height:100%;display:flex;flex-direction:column;justify-content:flex-start;background-color:lightblue;padding:0}.title.svelte-1lvqdvn.svelte-1lvqdvn{text-align:center;font-size:2.4em}.swap-button-container.svelte-1lvqdvn.svelte-1lvqdvn{display:flex;justify-content:center;align-items:center}.chat-container.svelte-1lvqdvn.svelte-1lvqdvn{margin-top:auto;flex:0 0 400px;width:100%;display:flex;flex-direction:column;justify-content:flex-start;background-color:white}.chat-messages.svelte-1lvqdvn.svelte-1lvqdvn{flex:1 0 0;width:100%;overflow-x:hidden;overflow-y:scroll;padding:2px}.message-game.svelte-1lvqdvn.svelte-1lvqdvn{margin:5px;padding:5px;border-radius:6px;background-color:#c9a1a1;white-space:pre-wrap}.message-local.svelte-1lvqdvn.svelte-1lvqdvn{margin:5px;padding:5px;border-radius:6px;background-color:#92aec8;white-space:pre-wrap}.message-remote.svelte-1lvqdvn.svelte-1lvqdvn{margin:5px;padding:5px;border-radius:6px;background-color:#afafaf;white-space:pre-wrap}.chat-box.svelte-1lvqdvn.svelte-1lvqdvn{flex:0 0 36px;width:100%;display:flex;justify-content:flex-start}.chat-box.svelte-1lvqdvn input.svelte-1lvqdvn{flex:1 0 0;height:100%;border-radius:0px;border:1px solid black}.chat-box.svelte-1lvqdvn input.svelte-1lvqdvn:focus{outline:none}.chat-box.svelte-1lvqdvn button.svelte-1lvqdvn{flex:0 0 40px;height:100%;border-radius:0px;border:1px solid black}
