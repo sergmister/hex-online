@@ -1,0 +1,167 @@
+<script lang="ts" context="module">
+  export interface HexMenuOptions {
+    dark: boolean;
+    reverse: boolean;
+    width: number;
+    height: number;
+    swapRule: boolean;
+    playerTypes: (HexPlayerType | DarkHexPlayerType | ReverseHexPlayerType | DarkReverseHexPlayerType)[];
+  }
+</script>
+
+<script lang="ts">
+  import { createEventDispatcher } from "svelte";
+
+  import { HexPlayerType, ReverseHexPlayerType } from "src/hex/Hex";
+  import { DarkHexPlayerType, DarkReverseHexPlayerType } from "src/hex/DarkHex";
+
+  enum HexGames {
+    Hex = "hex",
+    DarkHex = "dark hex",
+    ReverseHex = "reverse hex",
+    DarkReverseHex = "dark reverse hex",
+  }
+
+  let hexGame: HexGames = HexGames.Hex;
+
+  let options: HexMenuOptions = {
+    dark: false,
+    reverse: false,
+    width: 11,
+    height: 11,
+    swapRule: false,
+    playerTypes: [HexPlayerType.Local, HexPlayerType.Local],
+  };
+
+  $: {
+    if (options.width !== options.height || options.dark) {
+      options.swapRule = false;
+    }
+  }
+
+  let playerTypeEnum:
+    | typeof HexPlayerType
+    | typeof DarkHexPlayerType
+    | typeof ReverseHexPlayerType
+    | typeof DarkReverseHexPlayerType = HexPlayerType;
+
+  $: {
+    switchHexGame(hexGame);
+  }
+
+  const switchHexGame = (hexGame: HexGames) => {
+    switch (hexGame) {
+      case HexGames.Hex:
+        playerTypeEnum = HexPlayerType;
+        options.playerTypes = [HexPlayerType.Local, HexPlayerType.Local];
+        options.dark = false;
+        options.reverse = false;
+        break;
+      case HexGames.DarkHex:
+        playerTypeEnum = DarkHexPlayerType;
+        options.playerTypes = [DarkHexPlayerType.Local, DarkHexPlayerType.Local];
+        options.dark = true;
+        options.reverse = false;
+        break;
+      case HexGames.ReverseHex:
+        playerTypeEnum = ReverseHexPlayerType;
+        options.playerTypes = [ReverseHexPlayerType.Local, ReverseHexPlayerType.Local];
+        options.dark = false;
+        options.reverse = true;
+        break;
+      case HexGames.DarkReverseHex:
+        playerTypeEnum = DarkReverseHexPlayerType;
+        options.playerTypes = [DarkReverseHexPlayerType.Local, DarkReverseHexPlayerType.Local];
+        options.dark = true;
+        options.reverse = true;
+        break;
+    }
+  };
+
+  const dispatch = createEventDispatcher();
+
+  const onSubmit = () => {
+    if (
+      (options.playerTypes[0] !== "remote" && options.playerTypes[1] !== "remote") ||
+      (options.playerTypes[0] === "local" && options.playerTypes[1] === "remote") ||
+      (options.playerTypes[1] === "local" && options.playerTypes[0] === "remote")
+    ) {
+      dispatch("submit", options);
+    } else {
+      alert("You must have one local and one remote");
+    }
+  };
+</script>
+
+<div class="container">
+  <h2>Hex Online</h2>
+  <form on:submit|preventDefault={onSubmit}>
+    <select bind:value={hexGame}>
+      <option value="hex">Hex</option>
+      <option value="dark hex" title="Players cannot see each others moves"> Dark Hex </option>
+      <option value="reverse hex" title="First player to connect their sides loses"> Reverse Hex </option>
+      <option value="dark reverse hex" title="Dark Hex + Reverse Hex"> Dark Reverse Hex </option>
+    </select>
+
+    <label>
+      Width:
+      <input type="number" bind:value={options.width} min="2" max="32" />
+    </label>
+
+    <label>
+      Height:
+      <input type="number" bind:value={options.height} min="2" max="32" />
+    </label>
+
+    <label>
+      Swap Rule:
+      <input
+        type="checkbox"
+        bind:checked={options.swapRule}
+        disabled={options.width !== options.height || options.dark}
+      />
+    </label>
+
+    <label
+      >Player Red
+      <select bind:value={options.playerTypes[0]}>
+        {#each Object.values(playerTypeEnum) as option (option)}
+          <option value={option}>{option}</option>
+        {/each}
+      </select>
+    </label>
+
+    <label
+      >Player Blue
+      <select bind:value={options.playerTypes[1]}>
+        {#each Object.values(playerTypeEnum) as option (option)}
+          <option value={option}>{option}</option>
+        {/each}
+      </select>
+    </label>
+
+    <button type="submit">New game</button>
+  </form>
+</div>
+
+<style lang="scss">
+  .container {
+    flex: 1 0 240px;
+    max-width: 320px;
+    height: 100%;
+    background-color: lightblue;
+
+    h2 {
+      text-align: center;
+      font-size: 2.4em;
+    }
+
+    form {
+      padding: 20px;
+
+      * {
+        margin-top: 2px;
+      }
+    }
+  }
+</style>

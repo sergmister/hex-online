@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Launch Program",
+      "cwd": "${workspaceRoot}",
+      "skipFiles": ["<node_internals>/**", "<node_modules>/**"],
+
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+
+      "runtimeArgs": ["-r", "tsconfig-paths/register", "-r", "ts-node/register"],
+      "args": ["${workspaceFolder}/src/main.ts"]
+    }
+  ]
+}
