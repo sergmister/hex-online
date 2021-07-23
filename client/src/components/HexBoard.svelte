@@ -66,6 +66,7 @@
       cells = Array(boardWidth * boardHeight)
         .fill(0)
         .map((u, i) => ({ state: hexState.board[i], canvasX: 0, canvasY: 0 }));
+      cellSize = Math.min(canvas.width / (boardWidth + boardHeight / 2), canvas.height / (boardHeight * SQRT3_2 + 1));
       calculateCellCenters();
       redrawBoard(ctx);
     }
