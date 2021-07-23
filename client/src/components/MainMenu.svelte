@@ -6,6 +6,7 @@
     height: number;
     swapRule: boolean;
     playerTypes: (HexPlayerType | DarkHexPlayerType | ReverseHexPlayerType | DarkReverseHexPlayerType)[];
+    serverAddress: string;
   }
 </script>
 
@@ -31,6 +32,7 @@
     height: 11,
     swapRule: false,
     playerTypes: [HexPlayerType.Local, HexPlayerType.Local],
+    serverAddress: "http://localhost:4322",
   };
 
   $: {
@@ -104,17 +106,17 @@
     </select>
 
     <label>
-      Width:
+      Width
       <input type="number" bind:value={options.width} min="2" max="32" />
     </label>
 
     <label>
-      Height:
+      Height
       <input type="number" bind:value={options.height} min="2" max="32" />
     </label>
 
     <label>
-      Swap Rule:
+      Swap rule
       <input
         type="checkbox"
         bind:checked={options.swapRule}
@@ -123,7 +125,7 @@
     </label>
 
     <label
-      >Player Red
+      >Player red
       <select bind:value={options.playerTypes[0]}>
         {#each Object.values(playerTypeEnum) as option (option)}
           <option value={option}>{option}</option>
@@ -132,12 +134,17 @@
     </label>
 
     <label
-      >Player Blue
+      >Player blue
       <select bind:value={options.playerTypes[1]}>
         {#each Object.values(playerTypeEnum) as option (option)}
           <option value={option}>{option}</option>
         {/each}
       </select>
+    </label>
+
+    <label
+      >Server address
+      <input type="text" bind:value={options.serverAddress} />
     </label>
 
     <button type="submit">New game</button>
@@ -146,14 +153,15 @@
 
 <style lang="scss">
   .container {
-    flex: 1 0 240px;
-    max-width: 320px;
-    height: 100%;
+    grid-column: 1;
     background-color: lightblue;
 
     h2 {
       text-align: center;
       font-size: 2.4em;
+      margin: 0;
+      padding-top: 1em;
+      padding-bottom: 0.5em;
     }
 
     form {

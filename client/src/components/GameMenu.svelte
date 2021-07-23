@@ -93,9 +93,7 @@
 
 <style lang="scss">
   .container {
-    flex: 1 0 240px;
-    max-width: 320px;
-    height: 100%;
+    grid-column: 3;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -107,6 +105,9 @@
   .title {
     text-align: center;
     font-size: 2.4em;
+    margin: 0;
+    padding-top: 1em;
+    padding-bottom: 0.6em;
   }
 
   .swap-button-container {
@@ -119,6 +120,7 @@
     margin-top: auto;
     flex: 0 0 400px;
     width: 100%;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -126,8 +128,8 @@
   }
 
   .chat-messages {
-    flex: 1 0 0;
-    width: 100%;
+    flex: 1 0 120px;
+    /* width: 100%; */
     overflow-x: hidden;
     overflow-y: scroll;
     padding: 2px;
@@ -139,6 +141,7 @@
     border-radius: 6px;
     background-color: rgb(201, 161, 161);
     white-space: pre-wrap;
+    overflow-wrap: break-word;
   }
 
   .message-local {
@@ -147,6 +150,7 @@
     border-radius: 6px;
     background-color: rgb(146, 174, 200);
     white-space: pre-wrap;
+    overflow-wrap: break-word;
   }
 
   .message-remote {
@@ -155,6 +159,7 @@
     border-radius: 6px;
     background-color: rgb(175, 175, 175);
     white-space: pre-wrap;
+    overflow-wrap: break-word;
   }
 
   .chat-box {

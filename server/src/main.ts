@@ -1,7 +1,7 @@
 import http from "http";
 import express from "express";
 import { URL } from "url";
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import crypto from "crypto";
 import {
   validate,
@@ -22,8 +22,8 @@ import { HexGame, HexGameOptions, HexMoveInfo, HexPlayer } from "src/hex/Hex";
 import { DarkHexGame } from "src/hex/DarkHex";
 
 const PORT = process.env.PORT || 4322;
-const baseURL = `http://localhost:${PORT}`;
-export const CLIENT_URL = "http://localhost:5000/";
+// export const CLIENT_URL = "http://localhost:5000/";
+export const CLIENT_URL = "https://sergmister.github.io/hex-online/";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -32,7 +32,7 @@ app.use(express.json());
 
 export const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5000",
+    origin: "*",
     methods: ["GET", "POST"],
   },
   connectTimeout: 10000,
@@ -63,6 +63,9 @@ class HexGameOptionsDto implements HexGameOptions {
   @IsString({ each: true })
   @ArrayContains(["local", "remote"])
   playerTypes!: string[];
+
+  @IsString()
+  serverAddress!: string;
 }
 
 class HexMoveInfoDto implements HexMoveInfo {
@@ -143,6 +146,7 @@ io.of("hex").on("connection", async (socket) => {
           const url = new URL(CLIENT_URL);
           url.searchParams.set("game", "hex");
           url.searchParams.set("gameid", ownedGameID);
+          url.searchParams.set("serverAddress", encodeURIComponent(hexGameOptionsDto.serverAddress));
           socket.emit("joined", url.toString());
         }
       }
@@ -248,6 +252,7 @@ io.of("darkhex").on("connection", async (socket) => {
           const url = new URL(CLIENT_URL);
           url.searchParams.set("game", "darkhex");
           url.searchParams.set("gameid", ownedGameID);
+          url.searchParams.set("serverAddress", encodeURIComponent(hexGameOptionsDto.serverAddress));
           socket.emit("joined", url.toString());
         }
       }

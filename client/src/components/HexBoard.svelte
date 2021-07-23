@@ -63,10 +63,6 @@
     if (ctx) {
       canvas.width = canvas.clientWidth;
       canvas.height = canvas.clientHeight;
-      // redraw board?
-      cellSize =
-        Math.min(canvas.width, canvas.height * 1.6) /
-        Math.max(1.04 * (boardWidth + boardHeight / 2), 0.94 * boardHeight);
       cells = Array(boardWidth * boardHeight)
         .fill(0)
         .map((u, i) => ({ state: hexState.board[i], canvasX: 0, canvasY: 0 }));
@@ -122,7 +118,6 @@
     const y = event.clientY - rect.top;
     const pos = getClickedCell(x, y);
     if (pos !== null) {
-      // props.onCellClickCallback(pos);
       dispatch("cellClick", pos);
     }
   };
@@ -265,11 +260,12 @@
 
 <style lang="scss">
   .container {
-    flex: 8 0 240px;
-    min-width: 240px;
-    /* max-width: 120vh; */
-    height: 100%;
+    grid-column: 2;
     background-color: lightgreen;
+
+    @media (max-width: 800px) {
+      height: 80vw;
+    }
 
     canvas {
       width: 100%;

@@ -5,8 +5,6 @@ import type { DarkHexAI, DarkReverseHexAI } from "src/hex/ai/BaseAI";
 import { RandomAI } from "src/hex/ai/RandomAI";
 import type { HexMoveInfo } from "src/hex/Hex";
 
-import { SERVER_URL } from "src/hex/communication";
-
 export enum DarkHexPlayerType {
   Local = "local",
   Remote = "remote",
@@ -35,6 +33,7 @@ export interface DarkHexGameOptions {
   reverse: boolean;
   swapRule: boolean;
   playerTypes: (DarkHexPlayerType | DarkReverseHexPlayerType)[];
+  serverAddress: string;
 }
 
 export class DarkHexGame {
@@ -60,13 +59,13 @@ export class DarkHexGame {
   options: DarkHexGameOptions;
 
   constructor(
-    { width, height, reverse, swapRule, playerTypes }: DarkHexGameOptions,
+    { width, height, reverse, swapRule, playerTypes, serverAddress }: DarkHexGameOptions,
     onUpdateCallback: (hexGame: DarkHexGame) => void,
     socket?: Socket,
   ) {
     this.onUpdateCallback = onUpdateCallback;
 
-    this.options = { width, height, reverse, swapRule, playerTypes };
+    this.options = { width, height, reverse, swapRule, playerTypes, serverAddress };
 
     this.board = new HexBoard(width, height);
     this.currentPlayer = HexPlayerColor.Black;
@@ -139,10 +138,10 @@ export class DarkHexGame {
 
   socket_connect(socket?: Socket) {
     if (!socket) {
-      socket = io(SERVER_URL + "darkhex", {
+      const url = new URL("/darkhex", this.options.serverAddress);
+      socket = io(url.toString(), {
         query: { options: JSON.stringify(this.options) },
         reconnection: false,
-        path: "/socket.io",
       });
 
       socket.on("joined", (inviteLink: string) => {

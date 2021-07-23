@@ -5,8 +5,6 @@ import type { HexAI, ReverseHexAI } from "src/hex/ai/BaseAI";
 import { RandomAI } from "src/hex/ai/RandomAI";
 import { MostWinningCellAI } from "src/hex/ai/MostWinningCellAI";
 
-import { SERVER_URL } from "src/hex/communication";
-
 export enum HexPlayerType {
   Local = "local",
   Remote = "remote",
@@ -43,6 +41,7 @@ export interface HexGameOptions {
   reverse: boolean;
   swapRule: boolean;
   playerTypes: (HexPlayerType | ReverseHexPlayerType)[];
+  serverAddress: string;
 }
 
 export class HexGame {
@@ -66,7 +65,7 @@ export class HexGame {
   options: HexGameOptions;
 
   constructor(
-    { width, height, reverse, swapRule, playerTypes }: HexGameOptions,
+    { width, height, reverse, swapRule, playerTypes, serverAddress }: HexGameOptions,
     onUpdateCallback: (hexGame: HexGame) => void,
     socket?: Socket,
   ) {
@@ -76,7 +75,7 @@ export class HexGame {
       swapRule = false;
     }
 
-    this.options = { width, height, reverse, swapRule, playerTypes };
+    this.options = { width, height, reverse, swapRule, playerTypes, serverAddress };
 
     this.board = new HexBoard(width, height);
     this.currentState = new HexState(this.board.size);
@@ -139,10 +138,10 @@ export class HexGame {
 
   socket_connect(socket?: Socket) {
     if (!socket) {
-      socket = io(SERVER_URL + "hex", {
+      const url = new URL("/hex", this.options.serverAddress);
+      socket = io(url.toString(), {
         query: { options: JSON.stringify(this.options) },
         reconnection: false,
-        path: "/socket.io",
       });
 
       socket.on("joined", (inviteLink: string) => {
