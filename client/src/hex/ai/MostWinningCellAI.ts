@@ -1,5 +1,5 @@
 import type { HexAI } from "src/hex/ai/BaseAI";
-import { CellState, HexBoard, HexPlayerColor, HexState, switchPlayer } from "src/hex/HexBoard";
+import { CellState, HexBoard, HexPlayerColor, switchPlayer } from "src/hex/HexBoard";
 
 export class MostWinningCellAI implements HexAI {
   hexBoard: HexBoard;
@@ -8,10 +8,10 @@ export class MostWinningCellAI implements HexAI {
     this.hexBoard = hexBoard;
   }
 
-  getHexMove(state: HexState, player: HexPlayerColor) {
+  getHexMove(state: Uint8Array, player: HexPlayerColor) {
     const emptyCells = [];
     for (let i = 0; i < this.hexBoard.size; i++) {
-      if (state.board[i] === CellState.Empty) {
+      if (state[i] === CellState.Empty) {
         emptyCells.push(i);
       }
     }
@@ -19,7 +19,7 @@ export class MostWinningCellAI implements HexAI {
     const winArray: number[] = new Array(this.hexBoard.size).fill(0);
 
     for (let i = 0; i < 10000; i++) {
-      const newState: HexState = { board: state.board.slice() };
+      const newState = state.slice();
       let currentPlayer = player;
       const newEmptyCells = emptyCells.slice();
       shuffle(newEmptyCells);

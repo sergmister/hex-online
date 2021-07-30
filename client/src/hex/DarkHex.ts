@@ -1,6 +1,6 @@
 import { io, Socket } from "socket.io-client";
 
-import { CellState, HexBoard, HexPlayerColor, HexState, reduceCellState, switchPlayer } from "src/hex/HexBoard";
+import { CellState, HexBoard, HexPlayerColor, reduceCellState, switchPlayer } from "src/hex/HexBoard";
 import type { DarkHexAI, DarkReverseHexAI } from "src/hex/ai/BaseAI";
 import { RandomAI } from "src/hex/ai/RandomAI";
 import type { HexMoveInfo } from "src/hex/Hex";
@@ -39,8 +39,8 @@ export interface DarkHexGameOptions {
 export class DarkHexGame {
   players: (DarkHexPlayer | null)[] = Array(2).fill(null);
 
-  board: HexBoard;
-  currentState?: HexState;
+  hexBoard: HexBoard;
+  currentState?: Uint8Array;
   currentPlayer: HexPlayerColor;
   visibleBoards: (Uint8Array | null)[] = Array(2).fill(null);
 
@@ -67,7 +67,7 @@ export class DarkHexGame {
 
     this.options = { width, height, reverse, swapRule, playerTypes, serverAddress };
 
-    this.board = new HexBoard(width, height);
+    this.hexBoard = new HexBoard(width, height);
     this.currentPlayer = HexPlayerColor.Black;
 
     let online = false;
@@ -76,7 +76,7 @@ export class DarkHexGame {
       for (let i = 0; i < playerTypes.length; i++) {
         switch (playerTypes[i]) {
           case DarkHexPlayerType.Random:
-            this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Random, new RandomAI(this.board));
+            this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Random, new RandomAI(this.hexBoard));
             break;
           case DarkHexPlayerType.Remote:
             this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Remote);
@@ -91,7 +91,7 @@ export class DarkHexGame {
       for (let i = 0; i < playerTypes.length; i++) {
         switch (playerTypes[i]) {
           case DarkHexPlayerType.Random:
-            this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Random, new RandomAI(this.board));
+            this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Random, new RandomAI(this.hexBoard));
             break;
           case DarkHexPlayerType.Remote:
             this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Remote);
@@ -113,7 +113,7 @@ export class DarkHexGame {
     if (online) {
       this.socket_connect(socket);
     } else {
-      this.currentState = new HexState(this.board.size);
+      this.currentState = new Uint8Array(this.hexBoard.size).fill(CellState.Empty);
       this.started = true;
     }
 
@@ -186,7 +186,7 @@ export class DarkHexGame {
 
     this.socket.on("win", ({ win, board }: { win: HexPlayerColor; board: ArrayBuffer }) => {
       this.win = win;
-      this.currentState = { board: new Uint8Array(board) };
+      this.currentState = new Uint8Array(board);
       this.onUpdateCallback(this);
     });
 
@@ -224,7 +224,7 @@ export class DarkHexGame {
   local_move(pos: number) {
     if (this.started && !this.quited && this.win === undefined && !this.pending) {
       if (this.players[this.currentPlayer]?.type === "local") {
-        if (pos >= 0 && pos < this.board.size) {
+        if (pos >= 0 && pos < this.hexBoard.size) {
           if (this.visibleBoards[this.currentPlayer]![pos] === CellState.Empty) {
             if (this.socket) {
               this.pending = true;
@@ -251,10 +251,10 @@ export class DarkHexGame {
 
   move(pos: number) {
     let gameOver = false;
-    if (this.currentState!.board[pos] === CellState.Empty) {
+    if (this.currentState![pos] === CellState.Empty) {
       this.history?.push({ pos, color: this.currentPlayer });
-      gameOver = this.board.move(this.currentState!, this.currentPlayer, pos);
-      this.visibleBoards[this.currentPlayer]![pos] = reduceCellState(this.currentState!.board[pos]);
+      gameOver = this.hexBoard.move(this.currentState!, this.currentPlayer, pos);
+      this.visibleBoards[this.currentPlayer]![pos] = reduceCellState(this.currentState![pos]);
       if (gameOver) {
         if (this.options.reverse) {
           this.win = switchPlayer(this.currentPlayer);
@@ -264,7 +264,7 @@ export class DarkHexGame {
       }
       this.currentPlayer = switchPlayer(this.currentPlayer);
     } else {
-      this.visibleBoards[this.currentPlayer]![pos] = reduceCellState(this.currentState!.board[pos]);
+      this.visibleBoards[this.currentPlayer]![pos] = reduceCellState(this.currentState![pos]);
     }
     this.onUpdateCallback(this);
 

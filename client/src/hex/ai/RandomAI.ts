@@ -1,5 +1,5 @@
 import type { DarkHexAI, DarkReverseHexAI, HexAI, ReverseHexAI } from "src/hex/ai/BaseAI";
-import { CellState, HexBoard, HexPlayerColor, HexState } from "src/hex/HexBoard";
+import { CellState, HexBoard, HexPlayerColor } from "src/hex/HexBoard";
 
 export class RandomAI implements HexAI, DarkHexAI, ReverseHexAI, DarkReverseHexAI {
   hexBoard: HexBoard;
@@ -8,43 +8,29 @@ export class RandomAI implements HexAI, DarkHexAI, ReverseHexAI, DarkReverseHexA
     this.hexBoard = hexBoard;
   }
 
-  getHexMove(state: HexState, player: HexPlayerColor) {
+  private move(state: Uint8Array, player: HexPlayerColor) {
     const emptyCells = [];
     for (let i = 0; i < this.hexBoard.size; i++) {
-      if (state.board[i] === CellState.Empty) {
+      if (state[i] === CellState.Empty) {
         emptyCells.push(i);
       }
     }
     return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  }
+
+  getHexMove(state: Uint8Array, player: HexPlayerColor) {
+    return this.move(state, player);
   }
 
   getDarkHexMove(visibleBoard: Uint8Array, player: HexPlayerColor) {
-    const emptyCells = [];
-    for (let i = 0; i < this.hexBoard.size; i++) {
-      if (visibleBoard[i] === CellState.Empty) {
-        emptyCells.push(i);
-      }
-    }
-    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    return this.move(visibleBoard, player);
   }
 
-  getReverseHexMove(state: HexState, player: HexPlayerColor) {
-    const emptyCells = [];
-    for (let i = 0; i < this.hexBoard.size; i++) {
-      if (state.board[i] === CellState.Empty) {
-        emptyCells.push(i);
-      }
-    }
-    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  getReverseHexMove(state: Uint8Array, player: HexPlayerColor) {
+    return this.move(state, player);
   }
 
   getDarkReverseHexMove(visibleBoard: Uint8Array, player: HexPlayerColor) {
-    const emptyCells = [];
-    for (let i = 0; i < this.hexBoard.size; i++) {
-      if (visibleBoard[i] === CellState.Empty) {
-        emptyCells.push(i);
-      }
-    }
-    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    return this.move(visibleBoard, player);
   }
 }

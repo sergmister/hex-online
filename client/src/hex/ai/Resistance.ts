@@ -1,4 +1,4 @@
-import type { CellState, HexBoard, HexState } from "src/hex/HexBoard";
+import type { CellState, HexBoard } from "src/hex/HexBoard";
 
 let Size = 11;
 
@@ -28,7 +28,7 @@ export class ResistanceAI {
     for (let i = 0; i < Size; i++) this.Upd[i] = new Array(Size);
   }
 
-  getMove(state: HexState) {
+  getMove(board: Uint8Array) {
     // const emptyCells = [];
     // for (let i = 0; i < this.hexBoard.size; i++) {
     //   if (state.board[i] === CellState.Empty) {

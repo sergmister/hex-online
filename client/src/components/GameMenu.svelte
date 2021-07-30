@@ -120,7 +120,6 @@
     margin-top: auto;
     flex: 0 0 400px;
     width: 100%;
-    max-width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -129,7 +128,6 @@
 
   .chat-messages {
     flex: 1 0 120px;
-    /* width: 100%; */
     overflow-x: hidden;
     overflow-y: scroll;
     padding: 2px;

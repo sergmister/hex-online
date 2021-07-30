@@ -22,7 +22,6 @@ import { HexGame, HexGameOptions, HexMoveInfo, HexPlayer } from "src/hex/Hex";
 import { DarkHexGame } from "src/hex/DarkHex";
 
 const PORT = process.env.PORT || 4322;
-// export const CLIENT_URL = "http://localhost:5000/";
 export const CLIENT_URL = "https://sergmister.github.io/hex-online/";
 
 const app = express();

@@ -67,10 +67,11 @@ export class HexBoard {
   }
 
   getXY(pos: number) {
-    const x = pos & this.width;
+    const x = pos % this.width;
     const y = Math.floor(pos / this.width);
     return [x, y];
   }
+
   dfs(state: HexState, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
     const neighbors = this.neighbor_list[pos];
     for (const neighbor of neighbors) {

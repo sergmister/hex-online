@@ -28,8 +28,8 @@
   let options: HexMenuOptions = {
     dark: false,
     reverse: false,
-    width: 11,
-    height: 11,
+    width: 2,
+    height: 2,
     swapRule: false,
     playerTypes: [HexPlayerType.Local, HexPlayerType.Local],
     serverAddress: "http://localhost:4322",

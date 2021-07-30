@@ -1,0 +1,4 @@
+{
+  "rust-analyzer.diagnostics.disabled": ["missing-unsafe"],
+  "rust-analyzer.checkOnSave.extraArgs": ["--target=wasm32-unknown-unknown"]
+}

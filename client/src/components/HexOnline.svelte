@@ -1,11 +1,14 @@
 <script lang="ts">
+  // import { init } from "hexy";
+  // init();
+
   import { onMount } from "svelte";
   import { io, Socket } from "socket.io-client";
 
   import type { HexPlayerColor } from "src/hex/HexBoard";
   import type { HexPlayerType, ReverseHexPlayerType } from "src/hex/Hex";
   import type { DarkHexPlayerType, DarkReverseHexPlayerType } from "src/hex/DarkHex";
-  import { HexState, switchPlayer } from "src/hex/HexBoard";
+  import { switchPlayer } from "src/hex/HexBoard";
   import { HexGame } from "src/hex/Hex";
   import { DarkHexGame } from "src/hex/DarkHex";
 
@@ -15,7 +18,7 @@
   import GameMenu from "src/components/GameMenu.svelte";
 
   let currentGame: HexGame | DarkHexGame | undefined;
-  let lastState: HexState | undefined;
+  let lastState: Uint8Array | undefined;
 
   onMount(() => {
     const params = new URLSearchParams(window.location.search);
@@ -90,9 +93,9 @@
         lastState = hexGame.currentState;
       } else {
         if (hexGame.options.playerTypes[hexGame.currentPlayer] === "local") {
-          lastState = { board: hexGame.visibleBoards[hexGame.currentPlayer]! };
+          lastState = hexGame.visibleBoards[hexGame.currentPlayer]!;
         } else if (hexGame.options.playerTypes[switchPlayer(hexGame.currentPlayer)] === "local") {
-          lastState = { board: hexGame.visibleBoards[switchPlayer(hexGame.currentPlayer)]! };
+          lastState = hexGame.visibleBoards[switchPlayer(hexGame.currentPlayer)]!;
         } else {
           lastState = hexGame.currentState;
         }
@@ -113,10 +116,11 @@
       newGame(event.detail);
     }}
   />
+  <!-- svelte-ignore missing-declaration -->
   <HexBoard
-    boardWidth={currentGame?.board.width || 0}
-    boardHeight={currentGame?.board.height || 0}
-    hexState={lastState || new HexState(0)}
+    boardWidth={currentGame?.hexBoard.width || 0}
+    boardHeight={currentGame?.hexBoard.height || 0}
+    hexState={lastState || new Uint8Array(0)}
     on:cellClick={onHexBoardClick}
   />
   <GameMenu

@@ -1,7 +1,7 @@
-import type { HexPlayerColor, HexState } from "src/hex/HexBoard";
+import type { HexPlayerColor } from "src/hex/HexBoard";
 
 export interface HexAI {
-  getHexMove(state: HexState, player: HexPlayerColor): number;
+  getHexMove(state: Uint8Array, player: HexPlayerColor): number;
 }
 
 export interface DarkHexAI {
@@ -9,7 +9,7 @@ export interface DarkHexAI {
 }
 
 export interface ReverseHexAI {
-  getReverseHexMove(state: HexState, player: HexPlayerColor): number;
+  getReverseHexMove(state: Uint8Array, player: HexPlayerColor): number;
 }
 
 export interface DarkReverseHexAI {

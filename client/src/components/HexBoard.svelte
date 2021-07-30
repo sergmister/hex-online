@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
 
-  import type { HexState } from "src/hex/HexBoard";
   import { CellState } from "src/hex/HexBoard";
   import { onDestroy, onMount } from "svelte";
 
@@ -27,7 +26,7 @@
 
   export let boardWidth: number;
   export let boardHeight: number;
-  export let hexState: HexState;
+  export let hexState: Uint8Array;
 
   const dispatch = createEventDispatcher();
 
@@ -65,18 +64,18 @@
       canvas.height = canvas.clientHeight;
       cells = Array(boardWidth * boardHeight)
         .fill(0)
-        .map((u, i) => ({ state: hexState.board[i], canvasX: 0, canvasY: 0 }));
+        .map((u, i) => ({ state: hexState[i], canvasX: 0, canvasY: 0 }));
       cellSize = Math.min(canvas.width / (boardWidth + boardHeight / 2), canvas.height / (boardHeight * SQRT3_2 + 1));
       calculateCellCenters();
       redrawBoard(ctx);
     }
   };
 
-  const partialUpdate = (hexState: HexState) => {
+  const partialUpdate = (hexState: Uint8Array) => {
     if (ctx) {
       for (let i = 0; i < cells.length; i++) {
-        if (cells[i].state !== hexState.board[i]) {
-          updateCellState(ctx, i, hexState.board[i]);
+        if (cells[i].state !== hexState[i]) {
+          updateCellState(ctx, i, hexState[i]);
         }
       }
     }

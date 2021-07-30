@@ -15,14 +15,6 @@ export enum CellState {
   BlackWin,
 }
 
-export class HexState {
-  board: Uint8Array;
-
-  constructor(size: number) {
-    this.board = new Uint8Array(size).fill(CellState.Empty);
-  }
-}
-
 export class HexBoard {
   width: number;
   height: number;
@@ -67,22 +59,22 @@ export class HexBoard {
   }
 
   getXY(pos: number) {
-    const x = pos & this.width;
+    const x = pos % this.width;
     const y = Math.floor(pos / this.width);
     return [x, y];
   }
 
-  dfs(state: HexState, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
+  dfs(board: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
     const neighbors = this.neighbor_list[pos];
     for (const neighbor of neighbors) {
-      if (state.board[neighbor] === eq_cell_state) {
-        state.board[neighbor] = move_cell_state;
-        this.dfs(state, neighbor, eq_cell_state, move_cell_state);
+      if (board[neighbor] === eq_cell_state) {
+        board[neighbor] = move_cell_state;
+        this.dfs(board, neighbor, eq_cell_state, move_cell_state);
       }
     }
   }
 
-  move(state: HexState, player: HexPlayerColor, pos: number): boolean {
+  move(board: Uint8Array, player: HexPlayerColor, pos: number): boolean {
     switch (player) {
       case HexPlayerColor.Black: {
         let north_connected = false;
@@ -94,23 +86,23 @@ export class HexBoard {
         }
         const neighbors = this.neighbor_list[pos];
         for (const neighbor of neighbors) {
-          if (state.board[neighbor] === CellState.BlackNorth) {
+          if (board[neighbor] === CellState.BlackNorth) {
             north_connected = true;
-          } else if (state.board[neighbor] === CellState.BlackSouth) {
+          } else if (board[neighbor] === CellState.BlackSouth) {
             south_connected = true;
           }
         }
         if (north_connected && south_connected) {
-          state.board[pos] = CellState.BlackWin;
+          board[pos] = CellState.BlackWin;
           return true;
         } else if (north_connected) {
-          state.board[pos] = CellState.BlackNorth;
-          this.dfs(state, pos, CellState.Black, CellState.BlackNorth);
+          board[pos] = CellState.BlackNorth;
+          this.dfs(board, pos, CellState.Black, CellState.BlackNorth);
         } else if (south_connected) {
-          state.board[pos] = CellState.BlackSouth;
-          this.dfs(state, pos, CellState.Black, CellState.BlackSouth);
+          board[pos] = CellState.BlackSouth;
+          this.dfs(board, pos, CellState.Black, CellState.BlackSouth);
         } else {
-          state.board[pos] = CellState.Black;
+          board[pos] = CellState.Black;
         }
         break;
       }
@@ -125,23 +117,23 @@ export class HexBoard {
         }
         const neighbors = this.neighbor_list[pos];
         for (const neighbor of neighbors) {
-          if (state.board[neighbor] === CellState.WhiteWest) {
+          if (board[neighbor] === CellState.WhiteWest) {
             west_connected = true;
-          } else if (state.board[neighbor] === CellState.WhiteEast) {
+          } else if (board[neighbor] === CellState.WhiteEast) {
             east_connected = true;
           }
         }
         if (west_connected && east_connected) {
-          state.board[pos] = CellState.WhiteWin;
+          board[pos] = CellState.WhiteWin;
           return true;
         } else if (west_connected) {
-          state.board[pos] = CellState.WhiteWest;
-          this.dfs(state, pos, CellState.White, CellState.WhiteWest);
+          board[pos] = CellState.WhiteWest;
+          this.dfs(board, pos, CellState.White, CellState.WhiteWest);
         } else if (east_connected) {
-          state.board[pos] = CellState.WhiteEast;
-          this.dfs(state, pos, CellState.White, CellState.WhiteEast);
+          board[pos] = CellState.WhiteEast;
+          this.dfs(board, pos, CellState.White, CellState.WhiteEast);
         } else {
-          state.board[pos] = CellState.White;
+          board[pos] = CellState.White;
         }
         break;
       }

@@ -1,9 +1,11 @@
 import { io, Socket } from "socket.io-client";
 
-import { CellState, HexBoard, HexPlayerColor, HexState, switchPlayer } from "src/hex/HexBoard";
+import { CellState, HexBoard, HexPlayerColor, switchPlayer } from "src/hex/HexBoard";
 import type { HexAI, ReverseHexAI } from "src/hex/ai/BaseAI";
 import { RandomAI } from "src/hex/ai/RandomAI";
 import { MostWinningCellAI } from "src/hex/ai/MostWinningCellAI";
+import { MCTSAI } from "src/hex/ai/MCTS";
+import { MiaiAI } from "src/hex/ai/Miai";
 
 export enum HexPlayerType {
   Local = "local",
@@ -11,7 +13,8 @@ export enum HexPlayerType {
   Random = "random",
   MostWinningCell = "most-winning-cell",
   // Resistace = "resistance",
-  // MCTS = "mcts",
+  MCTS = "mcts",
+  Miai = "miai",
 }
 
 export enum ReverseHexPlayerType {
@@ -47,8 +50,8 @@ export interface HexGameOptions {
 export class HexGame {
   players: (HexPlayer | null)[] = Array(2).fill(null);
 
-  board: HexBoard;
-  currentState: HexState;
+  hexBoard: HexBoard;
+  currentState: Uint8Array;
   currentPlayer: HexPlayerColor;
 
   onUpdateCallback: (hexGame: HexGame) => void;
@@ -77,8 +80,8 @@ export class HexGame {
 
     this.options = { width, height, reverse, swapRule, playerTypes, serverAddress };
 
-    this.board = new HexBoard(width, height);
-    this.currentState = new HexState(this.board.size);
+    this.hexBoard = new HexBoard(width, height);
+    this.currentState = new Uint8Array(this.hexBoard.size).fill(CellState.Empty);
     this.currentPlayer = HexPlayerColor.Black;
 
     let online = false;
@@ -87,7 +90,7 @@ export class HexGame {
       for (let i = 0; i < playerTypes.length; i++) {
         switch (playerTypes[i]) {
           case HexPlayerType.Random:
-            this.players[i] = new HexPlayer(HexPlayerType.Random, new RandomAI(this.board));
+            this.players[i] = new HexPlayer(HexPlayerType.Random, new RandomAI(this.hexBoard));
             break;
           case HexPlayerType.Remote:
             this.players[i] = new HexPlayer(HexPlayerType.Remote);
@@ -102,10 +105,16 @@ export class HexGame {
       for (let i = 0; i < playerTypes.length; i++) {
         switch (playerTypes[i]) {
           case HexPlayerType.Random:
-            this.players[i] = new HexPlayer(HexPlayerType.Random, new RandomAI(this.board));
+            this.players[i] = new HexPlayer(HexPlayerType.Random, new RandomAI(this.hexBoard));
             break;
           case HexPlayerType.MostWinningCell:
-            this.players[i] = new HexPlayer(HexPlayerType.MostWinningCell, new MostWinningCellAI(this.board));
+            this.players[i] = new HexPlayer(HexPlayerType.MostWinningCell, new MostWinningCellAI(this.hexBoard));
+            break;
+          case HexPlayerType.MCTS:
+            this.players[i] = new HexPlayer(HexPlayerType.MCTS, new MCTSAI(this.hexBoard));
+            break;
+          case HexPlayerType.Miai:
+            this.players[i] = new HexPlayer(HexPlayerType.Miai, new MiaiAI(this.hexBoard));
             break;
           case HexPlayerType.Remote:
             this.players[i] = new HexPlayer(HexPlayerType.Remote);
@@ -184,7 +193,7 @@ export class HexGame {
       if (
         moveInfo.player === this.currentPlayer &&
         this.options.playerTypes[moveInfo.player] === "remote" &&
-        this.currentState.board[moveInfo.pos] === CellState.Empty
+        this.currentState[moveInfo.pos] === CellState.Empty
       ) {
         this.move(moveInfo.pos);
       } else {
@@ -234,8 +243,8 @@ export class HexGame {
   local_move(pos: number) {
     if (this.started && !this.quited && this.win === undefined) {
       if (this.players[this.currentPlayer]?.type === HexPlayerType.Local) {
-        if (pos >= 0 && pos < this.board.size) {
-          if (this.currentState.board[pos] === CellState.Empty) {
+        if (pos >= 0 && pos < this.hexBoard.size) {
+          if (this.currentState[pos] === CellState.Empty) {
             if (this.socket) {
               this.socket.emit("move", { player: this.currentPlayer, pos } as HexMoveInfo);
             }
@@ -248,7 +257,7 @@ export class HexGame {
 
   move(pos: number) {
     this.history.push({ pos, color: this.currentPlayer });
-    const gameOver = this.board.move(this.currentState, this.currentPlayer, pos);
+    const gameOver = this.hexBoard.move(this.currentState, this.currentPlayer, pos);
     if (gameOver) {
       if (this.options.reverse) {
         this.win = switchPlayer(this.currentPlayer);
@@ -289,11 +298,11 @@ export class HexGame {
   swap() {
     const firstMove = this.history[0];
     const pos = firstMove.pos;
-    this.currentState.board[pos] = CellState.Empty;
-    const [x, y] = this.board.getXY(pos);
-    const swapPos = this.board.getIndex(y, x);
+    this.currentState[pos] = CellState.Empty;
+    const [x, y] = this.hexBoard.getXY(pos);
+    const swapPos = this.hexBoard.getIndex(y, x);
     this.history.push({ pos: swapPos, color: this.currentPlayer, swap: true });
-    this.board.move(this.currentState, this.currentPlayer, swapPos);
+    this.hexBoard.move(this.currentState, this.currentPlayer, swapPos);
     this.currentPlayer = switchPlayer(this.currentPlayer);
     this.onUpdateCallback(this);
   }
