@@ -5,18 +5,18 @@ const UCB_EXPLORE = 1.0;
 
 export class Node {
   lastMove: number;
+  lastPlayer: HexPlayerColor;
   state: Uint8Array;
-  currentPlayer: HexPlayerColor;
   children: Node[] = [];
   numSims = 0;
   // wins for the other player
   numWins = 0;
   win = false;
 
-  constructor(lastMove: number, state: Uint8Array, currentPlayer: HexPlayerColor, win?: boolean) {
+  constructor(lastPlayer: HexPlayerColor, lastMove: number, state: Uint8Array, win?: boolean) {
+    this.lastPlayer = lastPlayer;
     this.lastMove = lastMove;
     this.state = state;
-    this.currentPlayer = currentPlayer;
     this.win = win || false;
   }
 
@@ -46,9 +46,9 @@ export class MCTSAI implements HexAI {
   }
 
   getHexMove(state: Uint8Array, player: HexPlayerColor) {
-    this.rootNode = new Node(-1, state.slice(), player);
+    this.rootNode = new Node(switchPlayer(player), -1, state.slice());
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 5000; i++) {
       const [currentNode, breadcrumbs] = this.select(this.rootNode);
       const [nodeSims, nodeWins] = this.evaluateLeaf(currentNode);
       this.backpropagate(breadcrumbs, nodeSims, nodeWins);
@@ -102,8 +102,9 @@ export class MCTSAI implements HexAI {
       for (let i = 0; i < this.hexBoard.size; i++) {
         if (node.state[i] === CellState.Empty) {
           let newState = node.state.slice();
-          let win = this.hexBoard.move(newState, node.currentPlayer, i);
-          let newNode = new Node(i, newState, switchPlayer(node.currentPlayer), win);
+          let newPlayer = switchPlayer(node.lastPlayer);
+          let win = this.hexBoard.move(newState, newPlayer, i);
+          let newNode = new Node(newPlayer, i, newState, win);
 
           if (win) {
             newNode.updateStats(1);
@@ -111,8 +112,8 @@ export class MCTSAI implements HexAI {
             nodeWins -= 1;
           } else {
             for (let s = 0; s < 3; s++) {
-              let winner = this.rollout(newNode.state, newNode.currentPlayer)!;
-              if (winner === newNode.currentPlayer) {
+              let winner = this.rollout(newNode.state.slice(), newPlayer)!;
+              if (winner !== newPlayer) {
                 newNode.updateStats(-1);
                 nodeSims += 1;
                 nodeWins += 1;
@@ -139,9 +140,7 @@ export class MCTSAI implements HexAI {
     }
   }
 
-  rollout(state: Uint8Array, currentPlayer: HexPlayerColor) {
-    let newState = state.slice();
-
+  rollout(state: Uint8Array, player: HexPlayerColor) {
     const emptyCells = [];
     for (let i = 0; i < this.hexBoard.size; i++) {
       if (state[i] === CellState.Empty) {
@@ -151,10 +150,10 @@ export class MCTSAI implements HexAI {
     shuffle(emptyCells);
 
     for (const pos of emptyCells) {
-      if (this.hexBoard.move(newState, currentPlayer, pos)) {
-        return currentPlayer;
+      player = switchPlayer(player);
+      if (this.hexBoard.move(state, player, pos)) {
+        return player;
       }
-      currentPlayer = switchPlayer(currentPlayer);
     }
   }
 }
