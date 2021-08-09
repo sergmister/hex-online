@@ -28,11 +28,11 @@
   let options: HexMenuOptions = {
     dark: false,
     reverse: false,
-    width: 6,
-    height: 6,
+    width: 11,
+    height: 11,
     swapRule: false,
     playerTypes: [HexPlayerType.Local, HexPlayerType.Local],
-    serverAddress: "http://localhost:4322",
+    serverAddress: "https://hex-online.azurewebsites.net",
   };
 
   $: {

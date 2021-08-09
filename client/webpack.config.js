@@ -67,7 +67,7 @@ module.exports = {
       filename: "[name].css",
     }),
   ],
-  devtool: prod ? false : "source-map",
+  devtool: prod ? false : "eval-source-map",
   devServer: {
     hot: true,
   },

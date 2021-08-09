@@ -29,6 +29,10 @@ const httpServer = http.createServer(app);
 
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
 export const io = new Server(httpServer, {
   cors: {
     origin: "*",
@@ -36,7 +40,6 @@ export const io = new Server(httpServer, {
   },
   connectTimeout: 10000,
   pingTimeout: 10000,
-  // path: "",
 });
 
 class HexGameOptionsDto implements HexGameOptions {
@@ -87,14 +90,14 @@ class MessageDto {
 const hexGames: Map<string, HexGame> = new Map();
 
 io.of("hex").on("connection", async (socket) => {
-  // console.log("socket connected!");
+  console.log("socket connected!");
 
   let ownedGameID: string | null = null;
   let thisGame: HexGame | null = null;
   let thisPlayer: HexPlayer | null = null;
 
   socket.once("disconnect", (reason) => {
-    // console.log(`a user disconnected: ${reason}`);
+    console.log(`a user disconnected: ${reason}`);
     if (thisGame && thisPlayer) {
       thisGame.quit();
     }
@@ -140,7 +143,7 @@ io.of("hex").on("connection", async (socket) => {
         if (selectedColor !== undefined) {
           thisGame = new HexGame(hexGameOptionsDto);
           thisPlayer = thisGame.join(socket, { color: selectedColor });
-          ownedGameID = crypto.randomBytes(12).toString("base64url");
+          ownedGameID = crypto.randomBytes(12).toString("hex");
           hexGames.set(ownedGameID, thisGame);
           const url = new URL(CLIENT_URL);
           url.searchParams.set("game", "hex");
@@ -193,14 +196,14 @@ io.of("hex").on("connection", async (socket) => {
 const darkHexGames: Map<string, DarkHexGame> = new Map();
 
 io.of("darkhex").on("connection", async (socket) => {
-  // console.log("socket connected!");
+  console.log("socket connected!");
 
   let ownedGameID: string | null = null;
   let thisGame: DarkHexGame | null = null;
   let thisPlayer: HexPlayer | null = null;
 
   socket.once("disconnect", (reason) => {
-    // console.log(`a user disconnected: ${reason}`);
+    console.log(`a user disconnected: ${reason}`);
     if (thisGame && thisPlayer) {
       thisGame.quit();
     }
@@ -246,7 +249,7 @@ io.of("darkhex").on("connection", async (socket) => {
         if (selectedColor !== undefined) {
           thisGame = new DarkHexGame(hexGameOptionsDto);
           thisPlayer = thisGame.join(socket, { color: selectedColor });
-          ownedGameID = crypto.randomBytes(12).toString("base64url");
+          ownedGameID = crypto.randomBytes(12).toString("hex");
           darkHexGames.set(ownedGameID, thisGame);
           const url = new URL(CLIENT_URL);
           url.searchParams.set("game", "darkhex");
@@ -287,4 +290,6 @@ io.of("darkhex").on("connection", async (socket) => {
   }
 });
 
-httpServer.listen(PORT);
+httpServer.listen(PORT, () => {
+  console.log(`server is listening on port ${PORT}`);
+});

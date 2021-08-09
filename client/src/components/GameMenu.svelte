@@ -4,7 +4,6 @@
   import { HexGame } from "src/hex/Hex";
   import type { DarkHexGame } from "src/hex/DarkHex";
   import { HexPlayerColor } from "src/hex/HexBoard";
-  import { select_options } from "svelte/internal";
 
   export let currentGame: HexGame | DarkHexGame | undefined;
 
@@ -59,13 +58,74 @@
 
 <div class="container">
   <h2 class="title">{title}</h2>
+  <div class="control-button-container">
+    <button
+      disabled={!currentGame || !!currentGame.socket}
+      on:click={() => {
+        currentGame?.step_back();
+      }}
+    >
+      <svg viewBox="0 0 45.974 45.975" style="transform: scale(-1,1)">
+        <path
+          d="M9.629,44.68c-1.154,1.16-2.895,1.51-4.407,0.885c-1.513-0.623-2.5-2.1-2.5-3.735V4.043c0-1.637,0.987-3.112,2.5-3.736 c1.513-0.625,3.253-0.275,4.407,0.885l17.862,17.951c2.088,2.098,2.088,5.488,0,7.585L9.629,44.68z"
+        />
+        <path
+          d="M38.252,45.975c-2.763,0-5-2.238-5-5V5c0-2.762,2.237-5,5-5c2.762,0,5,2.238,5,5v35.975 C43.252,43.736,41.013,45.975,38.252,45.975z"
+        />
+      </svg>
+    </button>
+    <button
+      disabled={!currentGame || !!currentGame.socket}
+      on:click={() => {
+        if (currentGame) {
+          if (currentGame.paused) {
+            currentGame.play();
+          } else {
+            currentGame.pause();
+          }
+        }
+      }}
+    >
+      {#if currentGame?.paused}
+        <svg viewBox="0 0 460.114 460.114">
+          <path
+            d="M393.538,203.629L102.557,5.543c-9.793-6.666-22.468-7.372-32.94-1.832c-10.472,5.538-17.022,16.413-17.022,28.26v396.173 c0,11.846,6.55,22.721,17.022,28.26c10.471,5.539,23.147,4.834,32.94-1.832l290.981-198.087 c8.746-5.954,13.98-15.848,13.98-26.428C407.519,219.477,402.285,209.582,393.538,203.629z"
+          />
+        </svg>
+      {:else}
+        <svg viewBox="0 0 47.607 47.607">
+          <path
+            d="M17.991,40.976c0,3.662-2.969,6.631-6.631,6.631l0,0c-3.662,0-6.631-2.969-6.631-6.631V6.631C4.729,2.969,7.698,0,11.36,0 l0,0c3.662,0,6.631,2.969,6.631,6.631V40.976z"
+          />
+          <path
+            d="M42.877,40.976c0,3.662-2.969,6.631-6.631,6.631l0,0c-3.662,0-6.631-2.969-6.631-6.631V6.631 C29.616,2.969,32.585,0,36.246,0l0,0c3.662,0,6.631,2.969,6.631,6.631V40.976z"
+          />
+        </svg>
+      {/if}
+    </button>
+    <button
+      disabled={!currentGame || !!currentGame.socket}
+      on:click={() => {
+        currentGame?.step_forward();
+      }}
+    >
+      <svg width="45.974px" height="45.975px" viewBox="0 0 45.974 45.975">
+        <path
+          d="M9.629,44.68c-1.154,1.16-2.895,1.51-4.407,0.885c-1.513-0.623-2.5-2.1-2.5-3.735V4.043c0-1.637,0.987-3.112,2.5-3.736 c1.513-0.625,3.253-0.275,4.407,0.885l17.862,17.951c2.088,2.098,2.088,5.488,0,7.585L9.629,44.68z"
+        />
+        <path
+          d="M38.252,45.975c-2.763,0-5-2.238-5-5V5c0-2.762,2.237-5,5-5c2.762,0,5,2.238,5,5v35.975 C43.252,43.736,41.013,45.975,38.252,45.975z"
+        />
+      </svg></button
+    >
+  </div>
   <div class="swap-button-container">
     <button
       on:click={onSwapClick}
       disabled={!(currentGame instanceof HexGame) ||
         !currentGame.options.swapRule ||
         currentGame.options.playerTypes[currentGame.currentPlayer] !== "local" ||
-        currentGame.history.length !== 1}>Swap</button
+        currentGame.history.length !== 2}>Swap</button
     >
   </div>
   <div class="chat-container">
@@ -108,6 +168,23 @@
     margin: 0;
     padding-top: 1em;
     padding-bottom: 0.6em;
+  }
+
+  .control-button-container {
+    display: flex;
+    margin: 10px 20px;
+    align-items: center;
+    justify-content: space-evenly;
+
+    button {
+      width: 40px;
+      height: 40px;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
   }
 
   .swap-button-container {

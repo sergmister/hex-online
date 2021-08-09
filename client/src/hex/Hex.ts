@@ -12,7 +12,6 @@ export enum HexPlayerType {
   Remote = "remote",
   Random = "random",
   MostWinningCell = "most-winning-cell",
-  // Resistace = "resistance",
   MCTS = "mcts",
   Miai = "miai",
 }
@@ -56,13 +55,20 @@ export class HexGame {
 
   onUpdateCallback: (hexGame: HexGame) => void;
 
-  history: { color: HexPlayerColor; pos: number; swap?: true }[] = [];
+  history: {
+    state: Uint8Array;
+    last_player?: HexPlayerColor;
+    last_move?: number;
+    swap?: true;
+    win?: HexPlayerColor | undefined;
+  }[];
   messages: { source: string; message: string }[] = [];
-  win?: HexPlayerColor;
+  win: HexPlayerColor | undefined;
   started = false;
   quited = false;
+  paused = false;
+  loading = false;
 
-  moveInterval?: number;
   socket?: Socket;
   inviteLink?: string;
   options: HexGameOptions;
@@ -83,6 +89,8 @@ export class HexGame {
     this.hexBoard = new HexBoard(width, height);
     this.currentState = new Uint8Array(this.hexBoard.size).fill(CellState.Empty);
     this.currentPlayer = HexPlayerColor.Black;
+
+    this.history = [{ state: this.currentState.slice() }];
 
     let online = false;
 
@@ -133,16 +141,7 @@ export class HexGame {
       this.started = true;
     }
 
-    const nextPlayer = this.players[this.currentPlayer];
-    if (nextPlayer?.ai) {
-      this.moveInterval = setTimeout(() => {
-        if (this.options.reverse) {
-          this.move((nextPlayer.ai as ReverseHexAI).getReverseHexMove(this.currentState, this.currentPlayer));
-        } else {
-          this.move((nextPlayer.ai as HexAI).getHexMove(this.currentState, this.currentPlayer));
-        }
-      }, 100);
-    }
+    this.next_play();
   }
 
   socket_connect(socket?: Socket) {
@@ -233,11 +232,37 @@ export class HexGame {
   quit() {
     this.quited = true;
     this.messages.push({ source: "game", message: "A player has quit or disconnected" });
-    if (this.moveInterval !== undefined) {
-      clearInterval(this.moveInterval);
-    }
     this.socket?.disconnect();
     this.onUpdateCallback(this);
+  }
+
+  play() {
+    this.paused = false;
+    this.onUpdateCallback(this);
+    this.next_play();
+  }
+
+  pause() {
+    this.paused = true;
+    this.onUpdateCallback(this);
+  }
+
+  step_back() {
+    if (!this.loading) {
+      if (this.history.length >= 2) {
+        this.history.pop();
+        this.currentState = this.history[this.history.length - 1].state.slice();
+        this.currentPlayer = switchPlayer(this.currentPlayer);
+        this.win = this.history[this.history.length - 1].win;
+        this.onUpdateCallback(this);
+      }
+    }
+  }
+
+  step_forward() {
+    if (!this.loading) {
+      this.next_play();
+    }
   }
 
   local_move(pos: number) {
@@ -256,7 +281,6 @@ export class HexGame {
   }
 
   move(pos: number) {
-    this.history.push({ pos, color: this.currentPlayer });
     const gameOver = this.hexBoard.move(this.currentState, this.currentPlayer, pos);
     if (gameOver) {
       if (this.options.reverse) {
@@ -265,19 +289,35 @@ export class HexGame {
         this.win = this.currentPlayer;
       }
     }
+    this.history.push({
+      state: this.currentState.slice(),
+      last_player: this.currentPlayer,
+      last_move: pos,
+      win: this.win,
+    });
     this.currentPlayer = switchPlayer(this.currentPlayer);
     this.onUpdateCallback(this);
 
-    if (!gameOver) {
+    if (!this.paused) {
+      this.next_play();
+    }
+  }
+
+  async next_play() {
+    if (this.win === undefined) {
       const nextPlayer = this.players[this.currentPlayer];
       if (nextPlayer?.ai) {
-        this.moveInterval = setTimeout(() => {
-          if (this.options.reverse) {
-            this.move((nextPlayer.ai as ReverseHexAI).getReverseHexMove(this.currentState, this.currentPlayer));
-          } else {
-            this.move((nextPlayer.ai as HexAI).getHexMove(this.currentState, this.currentPlayer));
-          }
-        }, 100);
+        let t1 = Date.now();
+        let move;
+        this.loading = true;
+        if (this.options.reverse) {
+          move = (nextPlayer.ai as ReverseHexAI).getReverseHexMove(this.currentState, this.currentPlayer);
+        } else {
+          move = (nextPlayer.ai as HexAI).getHexMove(this.currentState, this.currentPlayer);
+        }
+        await new Promise((r) => setTimeout(r, 100 - (Date.now() - t1)));
+        this.move(move);
+        this.loading = false;
       }
     }
   }
@@ -285,7 +325,7 @@ export class HexGame {
   local_swap() {
     if (this.started && !this.quited && this.win === undefined) {
       if (this.players[this.currentPlayer]?.type === HexPlayerType.Local) {
-        if (this.options.swapRule && this.history.length === 1) {
+        if (this.options.swapRule && this.history.length === 2) {
           if (this.socket) {
             this.socket.emit("swap");
           }
@@ -296,13 +336,17 @@ export class HexGame {
   }
 
   swap() {
-    const firstMove = this.history[0];
-    const pos = firstMove.pos;
+    const pos = this.history[1].last_move!;
     this.currentState[pos] = CellState.Empty;
     const [x, y] = this.hexBoard.getXY(pos);
     const swapPos = this.hexBoard.getIndex(y, x);
-    this.history.push({ pos: swapPos, color: this.currentPlayer, swap: true });
     this.hexBoard.move(this.currentState, this.currentPlayer, swapPos);
+    this.history.push({
+      state: this.currentState.slice(),
+      last_player: this.currentPlayer,
+      last_move: pos,
+      swap: true,
+    });
     this.currentPlayer = switchPlayer(this.currentPlayer);
     this.onUpdateCallback(this);
   }

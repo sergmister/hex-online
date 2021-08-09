@@ -46,12 +46,22 @@ export class DarkHexGame {
 
   onUpdateCallback: (hexGame: DarkHexGame) => void;
 
-  history: { color: HexPlayerColor; pos?: number; swap?: true }[] = [];
+  history?: {
+    state: Uint8Array;
+    black_visible_board: Uint8Array;
+    white_visible_board: Uint8Array;
+    last_player?: HexPlayerColor;
+    last_move?: number;
+    swap?: true;
+    win?: HexPlayerColor | undefined;
+  }[];
   messages: { source: string; message: string }[] = [];
-  win?: HexPlayerColor;
+  win?: HexPlayerColor | undefined;
   started = false;
   quited = false;
   pending = false;
+  paused = false;
+  loading = false;
 
   moveInterval?: number;
   socket?: Socket;
@@ -80,7 +90,6 @@ export class DarkHexGame {
             break;
           case DarkHexPlayerType.Remote:
             this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Remote);
-            online = true;
             break;
           case DarkHexPlayerType.Local:
             this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Local);
@@ -95,7 +104,6 @@ export class DarkHexGame {
             break;
           case DarkHexPlayerType.Remote:
             this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Remote);
-            online = true;
             break;
           case DarkHexPlayerType.Local:
             this.players[i] = new DarkHexPlayer(DarkHexPlayerType.Local);
@@ -105,7 +113,9 @@ export class DarkHexGame {
     }
 
     for (let i = 0; i < playerTypes.length; i++) {
-      if (playerTypes[i] !== "remote") {
+      if (playerTypes[i] === "remote") {
+        online = true;
+      } else {
         this.visibleBoards[i] = new Uint8Array(width * height);
       }
     }
@@ -114,26 +124,17 @@ export class DarkHexGame {
       this.socket_connect(socket);
     } else {
       this.currentState = new Uint8Array(this.hexBoard.size).fill(CellState.Empty);
+      this.history = [
+        {
+          state: this.currentState.slice(),
+          black_visible_board: this.visibleBoards[0]!.slice(),
+          white_visible_board: this.visibleBoards[1]!.slice(),
+        },
+      ];
       this.started = true;
     }
 
-    const nextPlayer = this.players[this.currentPlayer];
-    if (nextPlayer?.ai) {
-      this.moveInterval = setTimeout(() => {
-        if (this.options.reverse) {
-          this.move(
-            (nextPlayer.ai as DarkReverseHexAI).getDarkReverseHexMove(
-              this.visibleBoards[this.currentPlayer]!,
-              this.currentPlayer,
-            ),
-          );
-        } else {
-          this.move(
-            (nextPlayer.ai as DarkHexAI).getDarkHexMove(this.visibleBoards[this.currentPlayer]!, this.currentPlayer),
-          );
-        }
-      }, 100);
-    }
+    this.next_play();
   }
 
   socket_connect(socket?: Socket) {
@@ -221,6 +222,37 @@ export class DarkHexGame {
     this.onUpdateCallback(this);
   }
 
+  play() {
+    this.paused = false;
+    this.onUpdateCallback(this);
+    this.next_play();
+  }
+
+  pause() {
+    this.paused = true;
+    this.onUpdateCallback(this);
+  }
+
+  step_back() {
+    if (!this.loading && this.history) {
+      if (this.history.length >= 2) {
+        this.history.pop();
+        this.currentState = this.history[this.history.length - 1].state.slice();
+        this.visibleBoards[0] = this.history[this.history.length - 1].black_visible_board.slice();
+        this.visibleBoards[1] = this.history[this.history.length - 1].white_visible_board.slice();
+        this.currentPlayer = switchPlayer(this.currentPlayer);
+        this.win = this.history[this.history.length - 1].win;
+        this.onUpdateCallback(this);
+      }
+    }
+  }
+
+  step_forward() {
+    if (!this.loading) {
+      this.next_play();
+    }
+  }
+
   local_move(pos: number) {
     if (this.started && !this.quited && this.win === undefined && !this.pending) {
       if (this.players[this.currentPlayer]?.type === "local") {
@@ -252,7 +284,6 @@ export class DarkHexGame {
   move(pos: number) {
     let gameOver = false;
     if (this.currentState![pos] === CellState.Empty) {
-      this.history?.push({ pos, color: this.currentPlayer });
       gameOver = this.hexBoard.move(this.currentState!, this.currentPlayer, pos);
       this.visibleBoards[this.currentPlayer]![pos] = reduceCellState(this.currentState![pos]);
       if (gameOver) {
@@ -262,29 +293,46 @@ export class DarkHexGame {
           this.win = this.currentPlayer;
         }
       }
+      this.history?.push({
+        state: this.currentState!.slice(),
+        black_visible_board: this.visibleBoards[0]!.slice(),
+        white_visible_board: this.visibleBoards[1]!.slice(),
+        last_player: this.currentPlayer,
+        last_move: pos,
+        win: this.win,
+      });
       this.currentPlayer = switchPlayer(this.currentPlayer);
     } else {
       this.visibleBoards[this.currentPlayer]![pos] = reduceCellState(this.currentState![pos]);
     }
     this.onUpdateCallback(this);
 
-    if (!gameOver) {
+    if (!this.paused) {
+      this.next_play();
+    }
+  }
+
+  async next_play() {
+    if (this.win === undefined) {
       const nextPlayer = this.players[this.currentPlayer];
       if (nextPlayer?.ai) {
-        this.moveInterval = setTimeout(() => {
-          if (this.options.reverse) {
-            this.move(
-              (nextPlayer.ai as DarkReverseHexAI).getDarkReverseHexMove(
-                this.visibleBoards[this.currentPlayer]!,
-                this.currentPlayer,
-              ),
-            );
-          } else {
-            this.move(
-              (nextPlayer.ai as DarkHexAI).getDarkHexMove(this.visibleBoards[this.currentPlayer]!, this.currentPlayer),
-            );
-          }
-        }, 100);
+        let t1 = Date.now();
+        let move;
+        this.loading = true;
+        if (this.options.reverse) {
+          move = (nextPlayer.ai as DarkReverseHexAI).getDarkReverseHexMove(
+            this.visibleBoards[this.currentPlayer]!,
+            this.currentPlayer,
+          );
+        } else {
+          move = (nextPlayer.ai as DarkHexAI).getDarkHexMove(
+            this.visibleBoards[this.currentPlayer]!,
+            this.currentPlayer,
+          );
+        }
+        await new Promise((r) => setTimeout(r, 100 - (Date.now() - t1)));
+        this.move(move);
+        this.loading = false;
       }
     }
   }
