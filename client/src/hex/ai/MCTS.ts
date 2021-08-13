@@ -9,10 +9,8 @@ export class Node {
   state: Uint8Array;
   children: Node[] = [];
 
-  numSims = 0;
-  // wins for the last player
-  numWins = 0;
-  ucbEval = 0.5;
+  numSims = 0; // total number of simulations
+  numWins = 0; // wins for the last player
   win = false;
 
   constructor(lastPlayer: HexPlayerColor, lastMove: number, state: Uint8Array, win?: boolean) {
@@ -32,9 +30,6 @@ export class Node {
   }
 
   ucb_eval(child: Node) {
-    // if (child.numSims == 0) {
-    //   return Infinity;
-    // }
     return child.numWins / child.numSims + UCB_EXPLORE * Math.sqrt(Math.log(this.numSims) / child.numSims);
   }
 }
@@ -47,10 +42,10 @@ export class MCTSAI implements HexAI {
     this.hexBoard = hexBoard;
   }
 
-  getHexMove(state: Uint8Array, player: HexPlayerColor) {
-    this.rootNode = new Node(switchPlayer(player), -1, state.slice());
+  getHexMove(state: Uint8Array, player: HexPlayerColor, lastMove?: number) {
+    this.rootNode = new Node(switchPlayer(player), lastMove || -1, state.slice());
 
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 1000; i++) {
       const [currentNode, breadcrumbs] = this.select(this.rootNode);
       const [nodeSims, nodeWins] = this.evaluateLeaf(currentNode);
       this.backpropagate(breadcrumbs, nodeSims, nodeWins);
@@ -78,7 +73,6 @@ export class MCTSAI implements HexAI {
       let bestChild: Node;
       for (const child of currentNode.children) {
         let val = currentNode.ucb_eval(child);
-        // let val = currentNode.ucbEval;
         if (val > bestEval) {
           bestEval = val;
           bestChild = child;
@@ -124,7 +118,6 @@ export class MCTSAI implements HexAI {
               }
             }
           }
-          // newNode.ucbEval = node.ucb_eval(newNode);
           node.children.push(newNode);
         }
       }

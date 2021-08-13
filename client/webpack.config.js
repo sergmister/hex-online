@@ -70,5 +70,6 @@ module.exports = {
   devtool: prod ? false : "eval-source-map",
   devServer: {
     hot: true,
+    port: 5000,
   },
 };

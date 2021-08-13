@@ -1,13 +1,13 @@
 import { Socket } from "socket.io";
 
-import { CellState, HexBoard, HexPlayerColor, HexState, reduceCellState, switchPlayer } from "src/hex/HexBoard";
+import { CellState, HexBoard, HexPlayerColor, reduceCellState, switchPlayer } from "src/hex/HexBoard";
 import { HexGameOptions, HexPlayer } from "src/hex/Hex";
 
 export class DarkHexGame {
   players: (HexPlayer | null)[] = Array(2).fill(null);
 
-  board: HexBoard;
-  currentState: HexState;
+  hexBoard: HexBoard;
+  currentState: Uint8Array;
   currentPlayer: HexPlayerColor;
 
   history: { pos: number; color: HexPlayerColor }[] = [];
@@ -20,8 +20,8 @@ export class DarkHexGame {
   constructor({ width, height, reverse, swapRule }: HexGameOptions) {
     this.options = { width, height, reverse, swapRule };
 
-    this.board = new HexBoard(width, height);
-    this.currentState = new HexState(this.board.size);
+    this.hexBoard = new HexBoard(width, height);
+    this.currentState = new Uint8Array(this.hexBoard.size).fill(CellState.Empty);
     this.currentPlayer = HexPlayerColor.Black;
   }
 
@@ -64,17 +64,17 @@ export class DarkHexGame {
   move(color: HexPlayerColor, pos: number): boolean {
     if (this.started && !this.quited && this.win === undefined) {
       if (color === this.currentPlayer) {
-        if (pos >= 0 && pos < this.board.size) {
-          if (this.currentState.board[pos] === CellState.Empty) {
+        if (pos >= 0 && pos < this.hexBoard.size) {
+          if (this.currentState[pos] === CellState.Empty) {
             this.history.push({ pos, color: this.currentPlayer });
-            const gameOver = this.board.move(this.currentState, color, pos);
+            const gameOver = this.hexBoard.move(this.currentState, color, pos);
             this.players[color]!.socket.emit("move", {
-              state: reduceCellState(this.currentState.board[pos]),
+              state: reduceCellState(this.currentState[pos]),
               pos,
               switchColor: true,
             });
             this.players[switchPlayer(color)]!.socket.emit("move", {
-              state: reduceCellState(this.currentState.board[pos]),
+              state: reduceCellState(this.currentState[pos]),
               switchColor: true,
             });
             if (gameOver) {
@@ -83,14 +83,14 @@ export class DarkHexGame {
               } else {
                 this.win = this.currentPlayer;
               }
-              this.players[color]!.socket.emit("win", { win: this.win, board: this.currentState.board });
-              this.players[switchPlayer(color)]!.socket.emit("win", { win: this.win, board: this.currentState.board });
+              this.players[color]!.socket.emit("win", { win: this.win, board: this.currentState });
+              this.players[switchPlayer(color)]!.socket.emit("win", { win: this.win, board: this.currentState });
             }
             this.currentPlayer = switchPlayer(this.currentPlayer);
             return true;
           } else {
             this.players[color]!.socket.emit("move", {
-              state: reduceCellState(this.currentState.board[pos]),
+              state: reduceCellState(this.currentState[pos]),
               pos,
               switchColor: false,
             });

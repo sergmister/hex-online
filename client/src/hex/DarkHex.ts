@@ -3,7 +3,6 @@ import { io, Socket } from "socket.io-client";
 import { CellState, HexBoard, HexPlayerColor, reduceCellState, switchPlayer } from "src/hex/HexBoard";
 import type { DarkHexAI, DarkReverseHexAI } from "src/hex/ai/BaseAI";
 import { RandomAI } from "src/hex/ai/RandomAI";
-import type { HexMoveInfo } from "src/hex/Hex";
 
 export enum DarkHexPlayerType {
   Local = "local",
@@ -27,6 +26,11 @@ export class DarkHexPlayer {
   }
 }
 
+interface HexMoveInfo {
+  player: HexPlayerColor;
+  pos: number;
+}
+
 export interface DarkHexGameOptions {
   width: number;
   height: number;
@@ -36,14 +40,19 @@ export interface DarkHexGameOptions {
   serverAddress: string;
 }
 
+// class that manages an instance of a dark hex game
 export class DarkHexGame {
+  // list of players to filled
   players: (DarkHexPlayer | null)[] = Array(2).fill(null);
 
   hexBoard: HexBoard;
+  // currentState is undefined if the game type is remote
   currentState?: Uint8Array;
   currentPlayer: HexPlayerColor;
+  // the current visible board for each player, null if the player is remote
   visibleBoards: (Uint8Array | null)[] = Array(2).fill(null);
 
+  // called when the game makes an update and needs to sync state with svelte
   onUpdateCallback: (hexGame: DarkHexGame) => void;
 
   history?: {
@@ -56,15 +65,15 @@ export class DarkHexGame {
     win?: HexPlayerColor | undefined;
   }[];
   messages: { source: string; message: string }[] = [];
-  win?: HexPlayerColor | undefined;
-  started = false;
-  quited = false;
-  pending = false;
-  paused = false;
-  loading = false;
 
-  moveInterval?: number;
-  socket?: Socket;
+  win: HexPlayerColor | undefined; // set when the game is won
+  started = false; // set what the game has started
+  quited = false; // set when is online and a player disconnects
+  pending = false; // set when game is remote and a local move is made (unset after repose from server)
+  paused = false; // set when the pause button is pressed (only effects AI)
+  loading = false; // set while AI is calculating move to prevent potential race condition
+
+  socket?: Socket; // socket io instance (game is online if this is set)
   inviteLink?: string;
   options: DarkHexGameOptions;
 
@@ -80,8 +89,7 @@ export class DarkHexGame {
     this.hexBoard = new HexBoard(width, height);
     this.currentPlayer = HexPlayerColor.Black;
 
-    let online = false;
-
+    // set players from options
     if (this.options.reverse) {
       for (let i = 0; i < playerTypes.length; i++) {
         switch (playerTypes[i]) {
@@ -112,6 +120,9 @@ export class DarkHexGame {
       }
     }
 
+    let online = false;
+
+    // checks if game is remote
     for (let i = 0; i < playerTypes.length; i++) {
       if (playerTypes[i] === "remote") {
         online = true;
@@ -120,6 +131,7 @@ export class DarkHexGame {
       }
     }
 
+    // if the game is online the server manages the state, otherwise the client manages the state
     if (online) {
       this.socket_connect(socket);
     } else {
@@ -134,9 +146,11 @@ export class DarkHexGame {
       this.started = true;
     }
 
+    // next_play called in case the first player is AI
     this.next_play();
   }
 
+  // sets up socket io and connects to server
   socket_connect(socket?: Socket) {
     if (!socket) {
       const url = new URL("/darkhex", this.options.serverAddress);
@@ -215,9 +229,6 @@ export class DarkHexGame {
   quit() {
     this.quited = true;
     this.messages.push({ source: "game", message: "A player has quit or disconnected" });
-    if (this.moveInterval !== undefined) {
-      clearInterval(this.moveInterval);
-    }
     this.socket?.disconnect();
     this.onUpdateCallback(this);
   }
@@ -233,6 +244,7 @@ export class DarkHexGame {
     this.onUpdateCallback(this);
   }
 
+  // undo
   step_back() {
     if (!this.loading && this.history) {
       if (this.history.length >= 2) {
@@ -253,6 +265,8 @@ export class DarkHexGame {
     }
   }
 
+  // called when a cell is clicked
+  // checks validity of move and makes appropriate actions
   local_move(pos: number) {
     if (this.started && !this.quited && this.win === undefined && !this.pending) {
       if (this.players[this.currentPlayer]?.type === "local") {
@@ -281,6 +295,9 @@ export class DarkHexGame {
     this.onUpdateCallback(this);
   }
 
+  // called when a move is to be made
+  // this function assumes the move is valid
+  // this function will check for a game over and if the next player is AI
   move(pos: number) {
     let gameOver = false;
     if (this.currentState![pos] === CellState.Empty) {
@@ -312,28 +329,33 @@ export class DarkHexGame {
     }
   }
 
-  async next_play() {
-    if (this.win === undefined) {
-      const nextPlayer = this.players[this.currentPlayer];
-      if (nextPlayer?.ai) {
-        let t1 = Date.now();
-        let move;
-        this.loading = true;
-        if (this.options.reverse) {
-          move = (nextPlayer.ai as DarkReverseHexAI).getDarkReverseHexMove(
-            this.visibleBoards[this.currentPlayer]!,
-            this.currentPlayer,
-          );
-        } else {
-          move = (nextPlayer.ai as DarkHexAI).getDarkHexMove(
-            this.visibleBoards[this.currentPlayer]!,
-            this.currentPlayer,
-          );
+  // checks if AI is next play and makes a move accordingly
+  next_play() {
+    // timeout ensures svelte has time update the board before the next move is made
+    setTimeout(async () => {
+      if (this.win === undefined) {
+        const nextPlayer = this.players[this.currentPlayer];
+        if (nextPlayer?.ai) {
+          let t1 = Date.now();
+          let move;
+          this.loading = true;
+          if (this.options.reverse) {
+            move = (nextPlayer.ai as DarkReverseHexAI).getDarkReverseHexMove(
+              this.visibleBoards[this.currentPlayer]!,
+              this.currentPlayer,
+            );
+          } else {
+            move = (nextPlayer.ai as DarkHexAI).getDarkHexMove(
+              this.visibleBoards[this.currentPlayer]!,
+              this.currentPlayer,
+            );
+          }
+          // set minimum time of 100 ms for aesthetic reasons
+          await new Promise((r) => setTimeout(r, 100 - (Date.now() - t1)));
+          this.move(move);
+          this.loading = false;
         }
-        await new Promise((r) => setTimeout(r, 100 - (Date.now() - t1)));
-        this.move(move);
-        this.loading = false;
       }
-    }
+    }, 10);
   }
 }

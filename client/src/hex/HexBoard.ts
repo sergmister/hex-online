@@ -110,17 +110,17 @@ export class HexBoard {
     return [x, y];
   }
 
-  dfs(board: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
+  dfs(state: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
     for (let i = 0; i < 6; i++) {
       const neighbor = this.neighbor_list[pos * 6 + i];
-      if (board[neighbor] === eq_cell_state) {
-        board[neighbor] = move_cell_state;
-        this.dfs(board, neighbor, eq_cell_state, move_cell_state);
+      if (state[neighbor] === eq_cell_state) {
+        state[neighbor] = move_cell_state;
+        this.dfs(state, neighbor, eq_cell_state, move_cell_state);
       }
     }
   }
 
-  move(board: Uint8Array, player: HexPlayerColor, pos: number): boolean {
+  move(state: Uint8Array, player: HexPlayerColor, pos: number): boolean {
     switch (player) {
       case HexPlayerColor.Black: {
         let north_connected = false;
@@ -132,23 +132,23 @@ export class HexBoard {
         }
         for (let i = 0; i < 6; i++) {
           const neighbor = this.neighbor_list[pos * 6 + i];
-          if (board[neighbor] === CellState.BlackNorth) {
+          if (state[neighbor] === CellState.BlackNorth) {
             north_connected = true;
-          } else if (board[neighbor] === CellState.BlackSouth) {
+          } else if (state[neighbor] === CellState.BlackSouth) {
             south_connected = true;
           }
         }
         if (north_connected && south_connected) {
-          board[pos] = CellState.BlackWin;
+          state[pos] = CellState.BlackWin;
           return true;
         } else if (north_connected) {
-          board[pos] = CellState.BlackNorth;
-          this.dfs(board, pos, CellState.Black, CellState.BlackNorth);
+          state[pos] = CellState.BlackNorth;
+          this.dfs(state, pos, CellState.Black, CellState.BlackNorth);
         } else if (south_connected) {
-          board[pos] = CellState.BlackSouth;
-          this.dfs(board, pos, CellState.Black, CellState.BlackSouth);
+          state[pos] = CellState.BlackSouth;
+          this.dfs(state, pos, CellState.Black, CellState.BlackSouth);
         } else {
-          board[pos] = CellState.Black;
+          state[pos] = CellState.Black;
         }
         break;
       }
@@ -163,23 +163,23 @@ export class HexBoard {
         }
         for (let i = 0; i < 6; i++) {
           const neighbor = this.neighbor_list[pos * 6 + i];
-          if (board[neighbor] === CellState.WhiteWest) {
+          if (state[neighbor] === CellState.WhiteWest) {
             west_connected = true;
-          } else if (board[neighbor] === CellState.WhiteEast) {
+          } else if (state[neighbor] === CellState.WhiteEast) {
             east_connected = true;
           }
         }
         if (west_connected && east_connected) {
-          board[pos] = CellState.WhiteWin;
+          state[pos] = CellState.WhiteWin;
           return true;
         } else if (west_connected) {
-          board[pos] = CellState.WhiteWest;
-          this.dfs(board, pos, CellState.White, CellState.WhiteWest);
+          state[pos] = CellState.WhiteWest;
+          this.dfs(state, pos, CellState.White, CellState.WhiteWest);
         } else if (east_connected) {
-          board[pos] = CellState.WhiteEast;
-          this.dfs(board, pos, CellState.White, CellState.WhiteEast);
+          state[pos] = CellState.WhiteEast;
+          this.dfs(state, pos, CellState.White, CellState.WhiteEast);
         } else {
-          board[pos] = CellState.White;
+          state[pos] = CellState.White;
         }
         break;
       }
@@ -188,31 +188,31 @@ export class HexBoard {
     return false;
   }
 
-  miaiConnectivityDfs(board: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
+  miaiConnectivityDfs(state: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
     for (let i = 0; i < 6; i++) {
       const neighbor = this.neighbor_list[pos * 6 + i];
-      if (board[neighbor] === eq_cell_state) {
-        board[neighbor] = move_cell_state;
-        this.dfs(board, neighbor, eq_cell_state, move_cell_state);
+      if (state[neighbor] === eq_cell_state) {
+        state[neighbor] = move_cell_state;
+        this.dfs(state, neighbor, eq_cell_state, move_cell_state);
       }
     }
 
     for (let i = 0; i < 6; i++) {
       const miaiNeighbor = this.miai_neighbor_list[pos * 6 + i];
       if (miaiNeighbor >= 0) {
-        if (board[miaiNeighbor] === eq_cell_state) {
+        if (state[miaiNeighbor] === eq_cell_state) {
           const neighbor1 = this.neighbor_list[pos * 6 + i];
           const neighbor2 = this.neighbor_list[pos * 6 + ((i + 1) % 6)];
           if (neighbor1 === CellState.Empty && neighbor2 === CellState.Empty) {
-            board[miaiNeighbor] = move_cell_state;
-            this.dfs(board, miaiNeighbor, eq_cell_state, move_cell_state);
+            state[miaiNeighbor] = move_cell_state;
+            this.dfs(state, miaiNeighbor, eq_cell_state, move_cell_state);
           }
         }
       }
     }
   }
 
-  miaiConnectivityMove(board: Uint8Array, reply: Int16Array, player: HexPlayerColor, pos: number): boolean {
+  miaiConnectivityMove(state: Uint8Array, reply: Int16Array, player: HexPlayerColor, pos: number): boolean {
     switch (player) {
       case HexPlayerColor.Black: {
         let north_connected = false;
@@ -227,9 +227,9 @@ export class HexBoard {
         for (let i = 0; i < 6; i++) {
           const neighbor = this.neighbor_list[pos * 6 + i];
           if (neighbor !== -1) {
-            if (board[neighbor] === CellState.BlackNorth) {
+            if (state[neighbor] === CellState.BlackNorth) {
               north_connected = true;
-            } else if (board[neighbor] === CellState.BlackSouth) {
+            } else if (state[neighbor] === CellState.BlackSouth) {
               south_connected = true;
             }
           }
@@ -241,11 +241,11 @@ export class HexBoard {
             if (
               neighbor1 !== -1 &&
               neighbor2 !== -1 &&
-              board[neighbor1] === CellState.Empty &&
-              board[neighbor2] === CellState.Empty
+              state[neighbor1] === CellState.Empty &&
+              state[neighbor2] === CellState.Empty
             ) {
               if (miaiNeighbor >= 0) {
-                switch (board[miaiNeighbor]) {
+                switch (state[miaiNeighbor]) {
                   case CellState.Black:
                   case CellState.BlackNorth:
                   case CellState.BlackSouth:
@@ -255,7 +255,7 @@ export class HexBoard {
                     break;
                 }
 
-                switch (board[miaiNeighbor]) {
+                switch (state[miaiNeighbor]) {
                   case CellState.BlackNorth:
                     north_connected = true;
                     break;
@@ -263,11 +263,11 @@ export class HexBoard {
                     south_connected = true;
                     break;
                 }
-              } else if (miaiNeighbor === -3) {
+              } else if (miaiNeighbor === -1) {
                 north_connected = true;
                 reply[neighbor1] = neighbor2;
                 reply[neighbor2] = neighbor1;
-              } else if (miaiNeighbor === -4) {
+              } else if (miaiNeighbor === -2) {
                 south_connected = true;
                 reply[neighbor1] = neighbor2;
                 reply[neighbor2] = neighbor1;
@@ -277,16 +277,16 @@ export class HexBoard {
         }
 
         if (north_connected && south_connected) {
-          board[pos] = CellState.BlackWin;
+          state[pos] = CellState.BlackWin;
           return true;
         } else if (north_connected) {
-          board[pos] = CellState.BlackNorth;
-          this.dfs(board, pos, CellState.Black, CellState.BlackNorth);
+          state[pos] = CellState.BlackNorth;
+          this.miaiConnectivityDfs(state, pos, CellState.Black, CellState.BlackNorth);
         } else if (south_connected) {
-          board[pos] = CellState.BlackSouth;
-          this.dfs(board, pos, CellState.Black, CellState.BlackSouth);
+          state[pos] = CellState.BlackSouth;
+          this.miaiConnectivityDfs(state, pos, CellState.Black, CellState.BlackSouth);
         } else {
-          board[pos] = CellState.Black;
+          state[pos] = CellState.Black;
         }
         break;
       }
@@ -304,9 +304,9 @@ export class HexBoard {
         for (let i = 0; i < 6; i++) {
           const neighbor = this.neighbor_list[pos * 6 + i];
           if (neighbor !== -1) {
-            if (board[neighbor] === CellState.WhiteWest) {
+            if (state[neighbor] === CellState.WhiteWest) {
               west_connected = true;
-            } else if (board[neighbor] === CellState.WhiteEast) {
+            } else if (state[neighbor] === CellState.WhiteEast) {
               east_connected = true;
             }
           }
@@ -318,11 +318,11 @@ export class HexBoard {
             if (
               neighbor1 !== -1 &&
               neighbor2 !== -1 &&
-              board[neighbor1] === CellState.Empty &&
-              board[neighbor2] === CellState.Empty
+              state[neighbor1] === CellState.Empty &&
+              state[neighbor2] === CellState.Empty
             ) {
               if (miaiNeighbor >= 0) {
-                switch (board[miaiNeighbor]) {
+                switch (state[miaiNeighbor]) {
                   case CellState.White:
                   case CellState.WhiteWest:
                   case CellState.WhiteEast:
@@ -332,7 +332,7 @@ export class HexBoard {
                     break;
                 }
 
-                switch (board[miaiNeighbor]) {
+                switch (state[miaiNeighbor]) {
                   case CellState.WhiteWest:
                     west_connected = true;
                     break;
@@ -354,16 +354,16 @@ export class HexBoard {
         }
 
         if (west_connected && east_connected) {
-          board[pos] = CellState.WhiteWin;
+          state[pos] = CellState.WhiteWin;
           return true;
         } else if (west_connected) {
-          board[pos] = CellState.WhiteWest;
-          this.dfs(board, pos, CellState.White, CellState.WhiteWest);
+          state[pos] = CellState.WhiteWest;
+          this.miaiConnectivityDfs(state, pos, CellState.White, CellState.WhiteWest);
         } else if (east_connected) {
-          board[pos] = CellState.WhiteEast;
-          this.dfs(board, pos, CellState.White, CellState.WhiteEast);
+          state[pos] = CellState.WhiteEast;
+          this.miaiConnectivityDfs(state, pos, CellState.White, CellState.WhiteEast);
         } else {
-          board[pos] = CellState.White;
+          state[pos] = CellState.White;
         }
         break;
       }

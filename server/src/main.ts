@@ -22,7 +22,6 @@ import { HexGame, HexGameOptions, HexMoveInfo, HexPlayer } from "src/hex/Hex";
 import { DarkHexGame } from "src/hex/DarkHex";
 
 const PORT = process.env.PORT || 4322;
-export const CLIENT_URL = "https://sergmister.github.io/hex-online/";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -145,11 +144,13 @@ io.of("hex").on("connection", async (socket) => {
           thisPlayer = thisGame.join(socket, { color: selectedColor });
           ownedGameID = crypto.randomBytes(12).toString("hex");
           hexGames.set(ownedGameID, thisGame);
-          const url = new URL(CLIENT_URL);
-          url.searchParams.set("game", "hex");
-          url.searchParams.set("gameid", ownedGameID);
-          url.searchParams.set("serverAddress", encodeURIComponent(hexGameOptionsDto.serverAddress));
-          socket.emit("joined", url.toString());
+          try {
+            const url = new URL(socket.handshake.headers.origin!);
+            url.searchParams.set("game", "hex");
+            url.searchParams.set("gameid", ownedGameID);
+            url.searchParams.set("serverAddress", encodeURIComponent(hexGameOptionsDto.serverAddress));
+            socket.emit("joined", url.toString());
+          } catch {}
         }
       }
     }
@@ -251,11 +252,13 @@ io.of("darkhex").on("connection", async (socket) => {
           thisPlayer = thisGame.join(socket, { color: selectedColor });
           ownedGameID = crypto.randomBytes(12).toString("hex");
           darkHexGames.set(ownedGameID, thisGame);
-          const url = new URL(CLIENT_URL);
-          url.searchParams.set("game", "darkhex");
-          url.searchParams.set("gameid", ownedGameID);
-          url.searchParams.set("serverAddress", encodeURIComponent(hexGameOptionsDto.serverAddress));
-          socket.emit("joined", url.toString());
+          try {
+            const url = new URL(socket.handshake.headers.origin!);
+            url.searchParams.set("game", "darkhex");
+            url.searchParams.set("gameid", ownedGameID);
+            url.searchParams.set("serverAddress", encodeURIComponent(hexGameOptionsDto.serverAddress));
+            socket.emit("joined", url.toString());
+          } catch {}
         }
       }
     }

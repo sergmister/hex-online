@@ -16,6 +16,8 @@
   import { HexPlayerType, ReverseHexPlayerType } from "src/hex/Hex";
   import { DarkHexPlayerType, DarkReverseHexPlayerType } from "src/hex/DarkHex";
 
+  const dispatch = createEventDispatcher();
+
   enum HexGames {
     Hex = "hex",
     DarkHex = "dark hex",
@@ -28,24 +30,24 @@
   let options: HexMenuOptions = {
     dark: false,
     reverse: false,
-    width: 11,
-    height: 11,
+    width: 5,
+    height: 5,
     swapRule: false,
     playerTypes: [HexPlayerType.Local, HexPlayerType.Local],
-    serverAddress: "https://hex-online.azurewebsites.net",
+    serverAddress: "http://localhost:4322",
   };
-
-  $: {
-    if (options.width !== options.height || options.dark) {
-      options.swapRule = false;
-    }
-  }
 
   let playerTypeEnum:
     | typeof HexPlayerType
     | typeof DarkHexPlayerType
     | typeof ReverseHexPlayerType
     | typeof DarkReverseHexPlayerType = HexPlayerType;
+
+  $: {
+    if (options.width !== options.height || options.dark) {
+      options.swapRule = false;
+    }
+  }
 
   $: {
     switchHexGame(hexGame);
@@ -79,8 +81,6 @@
         break;
     }
   };
-
-  const dispatch = createEventDispatcher();
 
   const onSubmit = () => {
     if (

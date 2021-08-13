@@ -1,6 +1,9 @@
 {
   "name": "svelte-app",
   "version": "1.0.0",
+  "main": "src/main.ts",
+  "license": "LGPL-3.0-or-later",
+  "private": true,
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
     "dev": "webpack serve --content-base public",
@@ -27,6 +30,8 @@
     "webpack-dev-server": "^3.11.2"
   },
   "dependencies": {
+    "@types/d3": "^7.0.0",
+    "d3": "^7.0.0",
     "hexy": "link:hex-wasm/pkg",
     "socket.io-client": "^4.1.3"
   }

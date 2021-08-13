@@ -1,6 +1,8 @@
 import type { HexAI } from "src/hex/ai/BaseAI";
 import { CellState, HexBoard, HexPlayerColor, switchPlayer } from "src/hex/HexBoard";
 
+const UCB_EXPLORE = 1.0;
+
 export class Node {
   lastMove: number;
   lastPlayer: HexPlayerColor;
@@ -8,9 +10,9 @@ export class Node {
   reply: Int16Array; // miai reply board
   children: Node[] = [];
 
-  numSims = 0;
+  numSims = 0; // total number of simulations
   numWins = 0; // wins for the last player
-  ucbVal = 0.5;
+  ucbVal = 0.5; // precalculated UCB evaluation
 
   constructor(lastPlayer: HexPlayerColor, lastMove: number, state: Uint8Array, reply: Int16Array) {
     this.lastPlayer = lastPlayer;
@@ -29,23 +31,19 @@ export class Node {
   }
 
   ucb_eval(child: Node) {
-    // if (child.numSims == 0) {
-    //   return Infinity;
-    // }
-    return child.numWins / child.numSims + 1.0 * Math.sqrt(Math.sqrt(this.numSims) / child.numSims);
+    return child.numWins / child.numSims + UCB_EXPLORE * Math.sqrt(Math.log(this.numSims) / child.numSims);
   }
 }
 
+// TODO: miai edge case where two miai share a common cell?
 export class MiaiAI implements HexAI {
   hexBoard: HexBoard;
   upperNode?: Node;
   rootNode?: Node;
-  mustReply: number[];
   miaiConnectivity: Uint8Array;
 
   constructor(hexBoard: HexBoard) {
     this.hexBoard = hexBoard;
-    this.mustReply = Array(hexBoard.size).fill(0);
     this.miaiConnectivity = new Uint8Array(hexBoard.size).fill(CellState.Empty);
   }
 

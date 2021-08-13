@@ -2,7 +2,7 @@
   "name": "hex-online-server",
   "version": "1.0.0",
   "main": "src/main.ts",
-  "license": "UNLICENSED",
+  "license": "LGPL-3.0-or-later",
   "private": true,
   "scripts": {
     "start": "ts-node -r tsconfig-paths/register src/main.ts",

@@ -4,6 +4,8 @@
   import { CellState } from "src/hex/HexBoard";
   import { onDestroy, onMount } from "svelte";
 
+  const dispatch = createEventDispatcher();
+
   type HexBoardCell = {
     state: CellState;
     canvasX: number;
@@ -27,8 +29,6 @@
   export let boardWidth: number;
   export let boardHeight: number;
   export let hexState: Uint8Array;
-
-  const dispatch = createEventDispatcher();
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | undefined;
@@ -263,7 +263,7 @@
     grid-column: 2;
     background-color: lightgreen;
 
-    @media (max-width: 800px) {
+    @media (max-width: 880px) {
       height: 80vw;
     }
 

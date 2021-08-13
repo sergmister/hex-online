@@ -1,13 +1,15 @@
 <script lang="ts">
   import { afterUpdate, beforeUpdate, createEventDispatcher } from "svelte";
 
+  import { HexPlayerColor } from "src/hex/HexBoard";
   import { HexGame } from "src/hex/Hex";
   import type { DarkHexGame } from "src/hex/DarkHex";
-  import { HexPlayerColor } from "src/hex/HexBoard";
 
-  export let currentGame: HexGame | DarkHexGame | undefined;
+  import { mcts_visualization } from "src/components/HexOnline.svelte";
 
   const dispatch = createEventDispatcher();
+
+  export let currentGame: HexGame | DarkHexGame | undefined;
 
   let title: string;
   $: {
@@ -26,18 +28,27 @@
     }
   }
 
-  let text: string;
+  $: {
+    if (
+      !(currentGame instanceof HexGame) ||
+      (!(currentGame.options.playerTypes[0] === "mcts") && !(currentGame.options.playerTypes[1] === "mcts"))
+    ) {
+      mcts_visualization.set(false);
+    }
+  }
+
+  let messageText: string;
 
   const onSwapClick = () => {
     dispatch("swap");
   };
 
   const sendMessage = () => {
-    dispatch("sendMessage", text);
-    text = "";
+    dispatch("sendMessage", messageText);
+    messageText = "";
   };
 
-  const handleInputKeydown = (event: KeyboardEvent) => {
+  const handleMessageInputKeydown = (event: KeyboardEvent) => {
     if (event.key === "Enter") {
       sendMessage();
     }
@@ -128,24 +139,35 @@
         currentGame.history.length !== 2}>Swap</button
     >
   </div>
+  <div class="mcts-visualization-container">
+    <label>
+      MCTS Visualization
+      <input
+        type="checkbox"
+        bind:checked={$mcts_visualization}
+        disabled={!(currentGame instanceof HexGame) ||
+          (!(currentGame.options.playerTypes[0] === "mcts") && !(currentGame.options.playerTypes[1] === "mcts"))}
+      />
+    </label>
+  </div>
   <div class="chat-container">
     <div class="chat-messages" bind:this={chatMessagesDiv}>
       {#each currentGame?.messages || [] as { source, message }}
         {#if source === "link"}
-          <div class="message-game">Invite link: <a href={message} target="_blank">{message}</a></div>
+          <div class="message message-game">Invite link: <a href={message} target="_blank">{message}</a></div>
         {:else if source === "game"}
-          <div class="message-game">{message}</div>
+          <div class="message message-game">{message}</div>
         {:else if (source === "blue" && currentGame?.options.playerTypes[1] === "local") || (source === "red" && currentGame?.options.playerTypes[0] === "local")}
-          <div class="message-local">{message}</div>
+          <div class="message message-local">{message}</div>
         {:else if (source === "blue" && currentGame?.options.playerTypes[1] === "remote") || (source === "red" && currentGame?.options.playerTypes[0] === "remote")}
-          <div class="message-remote">{message}</div>
+          <div class="message message-remote">{message}</div>
         {:else}
           <div>{message}</div>
         {/if}
       {/each}
     </div>
     <div class="chat-box">
-      <input type="text" bind:value={text} on:keydown={handleInputKeydown} />
+      <input type="text" bind:value={messageText} on:keydown={handleMessageInputKeydown} />
       <button on:click={sendMessage}>Send</button>
     </div>
   </div>
@@ -157,7 +179,6 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    /* align-items: center; */
     background-color: lightblue;
     padding: 0;
   }
@@ -193,6 +214,13 @@
     align-items: center;
   }
 
+  .mcts-visualization-container {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
   .chat-container {
     margin-top: auto;
     flex: 0 0 400px;
@@ -210,31 +238,24 @@
     padding: 2px;
   }
 
-  .message-game {
+  .message {
     margin: 5px;
     padding: 5px;
     border-radius: 6px;
-    background-color: rgb(201, 161, 161);
     white-space: pre-wrap;
     overflow-wrap: break-word;
+  }
+
+  .message-game {
+    background-color: rgb(201, 161, 161);
   }
 
   .message-local {
-    margin: 5px;
-    padding: 5px;
-    border-radius: 6px;
     background-color: rgb(146, 174, 200);
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
   }
 
   .message-remote {
-    margin: 5px;
-    padding: 5px;
-    border-radius: 6px;
     background-color: rgb(175, 175, 175);
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
   }
 
   .chat-box {
@@ -246,6 +267,7 @@
     input {
       flex: 1 0 0;
       height: 100%;
+      margin: 0;
       border-radius: 0px;
       border: 1px solid black;
 
@@ -257,6 +279,7 @@
     button {
       flex: 0 0 40px;
       height: 100%;
+      margin: 0;
       border-radius: 0px;
       border: 1px solid black;
     }

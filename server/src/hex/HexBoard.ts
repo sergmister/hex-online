@@ -15,49 +15,30 @@ export enum CellState {
   BlackWin,
 }
 
-export class HexState {
-  board: Uint8Array;
-
-  constructor(size: number) {
-    this.board = new Uint8Array(size).fill(CellState.Empty);
-  }
-}
-
+// this class computes moves in hex to determine if there is a winner
 export class HexBoard {
   width: number;
   height: number;
   size: number;
-  neighbor_list: number[][];
+  neighbor_list: Int16Array;
 
   constructor(width: number, height: number) {
     this.width = width;
     this.height = height;
     this.size = this.width * this.height;
-    this.neighbor_list = Array(this.size)
-      .fill(0)
-      .map((u) => (u = []));
+    this.neighbor_list = new Int16Array(this.size * 6);
 
+    // -1 means no no neighbor
     for (let x = 0; x < this.width; x++) {
       for (let y = 0; y < this.height; y++) {
-        const cell = this.neighbor_list[this.getIndex(x, y)];
-        if (x > 0) {
-          cell.push(this.getIndex(x - 1, y));
-        }
-        if (y > 0) {
-          cell.push(this.getIndex(x, y - 1));
-        }
-        if (x < this.width - 1) {
-          cell.push(this.getIndex(x + 1, y));
-        }
-        if (y < this.height - 1) {
-          cell.push(this.getIndex(x, y + 1));
-        }
-        if (x > 0 && y < this.height - 1) {
-          cell.push(this.getIndex(x - 1, y + 1));
-        }
-        if (y > 0 && x < this.width - 1) {
-          cell.push(this.getIndex(x + 1, y - 1));
-        }
+        const index = this.getIndex(x, y) * 6;
+
+        this.neighbor_list[index + 0] = y > 0 ? this.getIndex(x, y - 1) : -1;
+        this.neighbor_list[index + 1] = y > 0 && x < this.width - 1 ? this.getIndex(x + 1, y - 1) : -1;
+        this.neighbor_list[index + 2] = x < this.width - 1 ? this.getIndex(x + 1, y) : -1;
+        this.neighbor_list[index + 3] = y < this.height - 1 ? this.getIndex(x, y + 1) : -1;
+        this.neighbor_list[index + 4] = x > 0 && y < this.height - 1 ? this.getIndex(x - 1, y + 1) : -1;
+        this.neighbor_list[index + 5] = x > 0 ? this.getIndex(x - 1, y) : -1;
       }
     }
   }
@@ -72,17 +53,17 @@ export class HexBoard {
     return [x, y];
   }
 
-  dfs(state: HexState, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
-    const neighbors = this.neighbor_list[pos];
-    for (const neighbor of neighbors) {
-      if (state.board[neighbor] === eq_cell_state) {
-        state.board[neighbor] = move_cell_state;
+  dfs(state: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
+    for (let i = 0; i < 6; i++) {
+      const neighbor = this.neighbor_list[pos * 6 + i];
+      if (state[neighbor] === eq_cell_state) {
+        state[neighbor] = move_cell_state;
         this.dfs(state, neighbor, eq_cell_state, move_cell_state);
       }
     }
   }
 
-  move(state: HexState, player: HexPlayerColor, pos: number): boolean {
+  move(state: Uint8Array, player: HexPlayerColor, pos: number): boolean {
     switch (player) {
       case HexPlayerColor.Black: {
         let north_connected = false;
@@ -92,25 +73,25 @@ export class HexBoard {
         } else if (pos >= this.size - this.width) {
           south_connected = true;
         }
-        const neighbors = this.neighbor_list[pos];
-        for (const neighbor of neighbors) {
-          if (state.board[neighbor] === CellState.BlackNorth) {
+        for (let i = 0; i < 6; i++) {
+          const neighbor = this.neighbor_list[pos * 6 + i];
+          if (state[neighbor] === CellState.BlackNorth) {
             north_connected = true;
-          } else if (state.board[neighbor] === CellState.BlackSouth) {
+          } else if (state[neighbor] === CellState.BlackSouth) {
             south_connected = true;
           }
         }
         if (north_connected && south_connected) {
-          state.board[pos] = CellState.BlackWin;
+          state[pos] = CellState.BlackWin;
           return true;
         } else if (north_connected) {
-          state.board[pos] = CellState.BlackNorth;
+          state[pos] = CellState.BlackNorth;
           this.dfs(state, pos, CellState.Black, CellState.BlackNorth);
         } else if (south_connected) {
-          state.board[pos] = CellState.BlackSouth;
+          state[pos] = CellState.BlackSouth;
           this.dfs(state, pos, CellState.Black, CellState.BlackSouth);
         } else {
-          state.board[pos] = CellState.Black;
+          state[pos] = CellState.Black;
         }
         break;
       }
@@ -123,25 +104,25 @@ export class HexBoard {
         } else if (pos % this.width === this.width - 1) {
           east_connected = true;
         }
-        const neighbors = this.neighbor_list[pos];
-        for (const neighbor of neighbors) {
-          if (state.board[neighbor] === CellState.WhiteWest) {
+        for (let i = 0; i < 6; i++) {
+          const neighbor = this.neighbor_list[pos * 6 + i];
+          if (state[neighbor] === CellState.WhiteWest) {
             west_connected = true;
-          } else if (state.board[neighbor] === CellState.WhiteEast) {
+          } else if (state[neighbor] === CellState.WhiteEast) {
             east_connected = true;
           }
         }
         if (west_connected && east_connected) {
-          state.board[pos] = CellState.WhiteWin;
+          state[pos] = CellState.WhiteWin;
           return true;
         } else if (west_connected) {
-          state.board[pos] = CellState.WhiteWest;
+          state[pos] = CellState.WhiteWest;
           this.dfs(state, pos, CellState.White, CellState.WhiteWest);
         } else if (east_connected) {
-          state.board[pos] = CellState.WhiteEast;
+          state[pos] = CellState.WhiteEast;
           this.dfs(state, pos, CellState.White, CellState.WhiteEast);
         } else {
-          state.board[pos] = CellState.White;
+          state[pos] = CellState.White;
         }
         break;
       }
