@@ -46,6 +46,7 @@ export class HexGame {
     this.currentPlayer = HexPlayerColor.Black;
   }
 
+  // called when is game starts
   start() {
     this.started = true;
     for (const player of this.players) {
@@ -55,6 +56,7 @@ export class HexGame {
     }
   }
 
+  // called when the game exits for a variety of reasons
   quit() {
     this.quited = true;
     for (const [i, player] of this.players.entries()) {
@@ -65,6 +67,8 @@ export class HexGame {
     }
   }
 
+  // joins game, attempting to use prefered color, returns null if join failed
+  // TODO: mabye add auth token as another parameter to allow spectators?
   join(socket: Socket, { auth, color }: { auth?: string; color?: HexPlayerColor }): HexPlayer | null {
     if (color) {
       if (this.players[color] === null) {

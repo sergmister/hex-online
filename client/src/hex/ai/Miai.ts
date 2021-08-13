@@ -36,6 +36,9 @@ export class Node {
 }
 
 // TODO: miai edge case where two miai share a common cell?
+// implementation is pretty broken, doesn't evalute miai on root node correctly
+// miai calculations may be broken
+// value calculations may be broken
 export class MiaiAI implements HexAI {
   hexBoard: HexBoard;
   upperNode?: Node;
@@ -110,10 +113,8 @@ export class MiaiAI implements HexAI {
       let bestEval = -Infinity;
       let bestChild: Node;
       for (const child of currentNode.children) {
-        // let val = currentNode.ucb_eval(child);
-        let val = child.ucbVal;
-        if (val > bestEval) {
-          bestEval = val;
+        if (child.ucbVal > bestEval) {
+          bestEval = child.ucbVal;
           bestChild = child;
         }
       }
@@ -135,7 +136,6 @@ export class MiaiAI implements HexAI {
     if (node.numWins === Infinity) {
       nodeSims += 5;
       nodeWins += 5;
-      // throw "revisited winning node";
     } else {
       let possibleMoves: number[] = [];
 

@@ -3,6 +3,7 @@ export enum HexPlayerColor {
   White,
 }
 
+// indicates what sides a cell is connected to
 export enum CellState {
   Empty,
   White,
@@ -27,8 +28,8 @@ export class HexBoard {
     this.width = width;
     this.height = height;
     this.size = this.width * this.height;
-    this.neighbor_list = new Int16Array(this.size * 6);
-    this.miai_neighbor_list = new Int16Array(this.size * 6);
+    this.neighbor_list = new Int16Array(this.size * 6); // list representing neighboring cells
+    this.miai_neighbor_list = new Int16Array(this.size * 6); // list representing miai neighboring cells
 
     // -1 means no no neighbor
     for (let x = 0; x < this.width; x++) {
@@ -110,6 +111,7 @@ export class HexBoard {
     return [x, y];
   }
 
+  // depth first search to ensure all cells have proper connectivity
   dfs(state: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
     for (let i = 0; i < 6; i++) {
       const neighbor = this.neighbor_list[pos * 6 + i];
@@ -188,6 +190,7 @@ export class HexBoard {
     return false;
   }
 
+  // dfs with the ability for cells to connect via miai
   miaiConnectivityDfs(state: Uint8Array, pos: number, eq_cell_state: CellState, move_cell_state: CellState) {
     for (let i = 0; i < 6; i++) {
       const neighbor = this.neighbor_list[pos * 6 + i];

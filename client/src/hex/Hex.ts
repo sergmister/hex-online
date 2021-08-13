@@ -277,7 +277,7 @@ export class HexGame {
   // checks validity of move and makes appropriate actions
   local_move(pos: number) {
     if (this.started && !this.quited && this.win === undefined) {
-      if (this.players[this.currentPlayer]?.type === HexPlayerType.Local) {
+      if (this.players[this.currentPlayer]?.type === "local") {
         if (pos >= 0 && pos < this.hexBoard.size) {
           if (this.currentState[pos] === CellState.Empty) {
             if (this.socket) {

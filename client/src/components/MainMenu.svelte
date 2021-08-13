@@ -53,6 +53,7 @@
     switchHexGame(hexGame);
   }
 
+  // resets options on game change to ensure entries are valid
   const switchHexGame = (hexGame: HexGames) => {
     switch (hexGame) {
       case HexGames.Hex:
@@ -82,6 +83,7 @@
     }
   };
 
+  // submits new game, checks remote is valid
   const onSubmit = () => {
     if (
       (options.playerTypes[0] !== "remote" && options.playerTypes[1] !== "remote") ||

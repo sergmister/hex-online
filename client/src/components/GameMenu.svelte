@@ -57,11 +57,13 @@
   let chatMessagesDiv: HTMLDivElement;
   let autoscroll = false;
 
+  // checks if messages are scrolled to the bottom
   beforeUpdate(() => {
     autoscroll =
       chatMessagesDiv && chatMessagesDiv.offsetHeight + chatMessagesDiv.scrollTop > chatMessagesDiv.scrollHeight - 10;
   });
 
+  // auto scrolls if messages are scrolled to the bottom
   afterUpdate(() => {
     if (autoscroll) chatMessagesDiv.scrollTo(0, chatMessagesDiv.scrollHeight);
   });

@@ -30,11 +30,12 @@
     boardSize = boardWidth * boardHeight;
   }
 
-  let canvasSize = 80;
-  let cellSize;
+  let canvasSize = 80; // size of each hex board
+  let cellSize; // size of each hex cell
   let cells;
 
   $: {
+    // update cells on dimension change
     cellSize = canvasSize / (boardWidth + boardHeight / 2);
     cells = Array(boardSize)
       .fill(0)
@@ -48,16 +49,17 @@
     updateData(data);
   }
 
-  // thinkness / opacity be relative to neighboring paths?
-  // in board highlight last move
   const updateData = async (data) => {
+    // wait until component is mounted
     await mounted;
 
+    // see https://observablehq.com/@d3/collapsible-tree
     let dx = 80;
     let dy = 120 + Math.pow(boardSize, 0.6) * 20;
 
     let margin = { top: 80, bottom: 0, right: 0, left: 800 };
 
+    // clear any old svg
     if (svg) {
       svg.selectChildren().remove();
       svg.remove();
@@ -91,10 +93,13 @@
         d.children = null;
       });
 
+      // container for links
       const gLink = svg.append("g").attr("fill", "none");
 
+      // container for nodes
       const gNode = svg.append("g").attr("cursor", "pointer").attr("pointer-events", "all");
 
+      // enables zoom and pan controlls
       svg
         .call(
           d3.zoom().on("zoom", (e) => {
@@ -104,6 +109,7 @@
         )
         .on("dblclick.zoom", null);
 
+      // updates a node when modified
       const update = (source) => {
         const duration = 250;
         const nodes = root.descendants().reverse();
@@ -142,8 +148,10 @@
             update(d);
           });
 
+        // hover title
         nodeEnter.append("title").text((d) => `sims: ${d.data.numSims}\nwins: ${d.data.numWins}`);
 
+        // draws hex board background
         nodeEnter
           .append("path")
           .attr("fill", (d) => (d._children ? "#AAA" : "#CFCFCF"))
@@ -162,6 +170,7 @@
             return path;
           });
 
+        // drags hex board edges
         nodeEnter
           .append("path")
           .style("fill", "none")
@@ -175,6 +184,7 @@
             return path;
           });
 
+        // highlights last played cell
         nodeEnter
           .filter((d) => d.data.lastMove >= 0)
           .append("circle")
@@ -186,6 +196,7 @@
           .attr("fill", "url('#cellHighlight')")
           .style("mix-blend-mode", "color");
 
+        // draws cells
         for (const [i, cell] of cells.entries()) {
           nodeEnter
             .filter((d) => d.data.state[i] !== CellState.Empty)

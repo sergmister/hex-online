@@ -86,14 +86,15 @@ class MessageDto {
   message!: string;
 }
 
+// map of current hex games
 const hexGames: Map<string, HexGame> = new Map();
 
 io.of("hex").on("connection", async (socket) => {
   console.log("socket connected!");
 
-  let ownedGameID: string | null = null;
-  let thisGame: HexGame | null = null;
-  let thisPlayer: HexPlayer | null = null;
+  let ownedGameID: string | null = null; // set when a player has joined a game
+  let thisGame: HexGame | null = null; // game instance
+  let thisPlayer: HexPlayer | null = null; // player instance
 
   socket.once("disconnect", (reason) => {
     console.log(`a user disconnected: ${reason}`);
@@ -102,12 +103,15 @@ io.of("hex").on("connection", async (socket) => {
     }
     thisGame = null;
     thisPlayer = null;
+    // remove game if player is a member
     if (ownedGameID) {
       hexGames.delete(ownedGameID);
     }
   });
 
+  // lots a data validation
   if (typeof socket.handshake.query.gameid === "string") {
+    // joining game
     thisGame = hexGames.get(socket.handshake.query.gameid) || null;
     if (thisGame) {
       thisPlayer = thisGame.join(socket, {});
@@ -126,14 +130,17 @@ io.of("hex").on("connection", async (socket) => {
     }
   } else {
     if (typeof socket.handshake.query.options === "string") {
+      // creating a game
       let hexGameOptions;
       try {
         hexGameOptions = JSON.parse(socket.handshake.query.options);
       } catch {}
       const hexGameOptionsDto = plainToClass(HexGameOptionsDto, hexGameOptions);
+      // validate options
       const errors = await validate(hexGameOptionsDto, { forbidUnknownValues: true });
       if (errors.length === 0) {
         let selectedColor: HexPlayerColor | undefined;
+        // remote & local game options
         if (hexGameOptionsDto.playerTypes[0] === "local" && hexGameOptionsDto.playerTypes[1] === "remote") {
           selectedColor = HexPlayerColor.Black;
         } else if (hexGameOptionsDto.playerTypes[0] === "remote" && hexGameOptionsDto.playerTypes[1] === "local") {
@@ -145,6 +152,7 @@ io.of("hex").on("connection", async (socket) => {
           ownedGameID = crypto.randomBytes(12).toString("hex");
           hexGames.set(ownedGameID, thisGame);
           try {
+            // invite link
             const url = new URL(socket.handshake.headers.origin!);
             url.searchParams.set("game", "hex");
             url.searchParams.set("gameid", ownedGameID);
@@ -190,12 +198,14 @@ io.of("hex").on("connection", async (socket) => {
       }
     });
   } else {
+    // if player didn't join or create a game disconnect socket
     socket.disconnect();
   }
 });
 
 const darkHexGames: Map<string, DarkHexGame> = new Map();
 
+// lots of code duplication for simplicity
 io.of("darkhex").on("connection", async (socket) => {
   console.log("socket connected!");
 

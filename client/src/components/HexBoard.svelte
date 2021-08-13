@@ -33,13 +33,14 @@
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | undefined;
 
-  let cellSize: number;
+  let cellSize: number; // size of each cell
   let cells: HexBoardCell[];
   let backgroundColor = "lightgray";
   let resizeObserver: ResizeObserver;
 
   onMount(() => {
     ctx = canvas.getContext("2d")!;
+    // auto resize board
     resizeObserver = new ResizeObserver(() => {
       update(boardWidth, boardHeight);
     });
@@ -51,10 +52,12 @@
   });
 
   $: {
+    // full update on board dimension change
     update(boardWidth, boardHeight);
   }
 
   $: {
+    // partial update when only state changes
     partialUpdate(hexState);
   }
 
@@ -100,6 +103,7 @@
     }
   };
 
+  // gets cell index from click position to send as event to make a move
   const getClickedCell = (clickX: number, clickY: number): number | null => {
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
@@ -110,6 +114,7 @@
     return null;
   };
 
+  // called when canvas is clicked
   const onCanvasClick = (event: MouseEvent) => {
     event.stopPropagation();
 
@@ -122,10 +127,12 @@
     }
   };
 
+  // updates the state of a singe cell
   const updateCellState = (ctx: CanvasRenderingContext2D, pos: number, state: CellState) => {
     const cell = cells[pos];
     cell.state = state;
 
+    // clear cell to prevent fuzzyness on the edges
     ctx.beginPath();
     ctx.arc(cell.canvasX, cell.canvasY, cellSize / 3 + 2, 0, 2 * Math.PI);
     ctx.fillStyle = backgroundColor;

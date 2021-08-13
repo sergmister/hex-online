@@ -136,6 +136,7 @@ export const switchPlayer = (player: HexPlayerColor): HexPlayerColor => {
   return player === HexPlayerColor.Black ? HexPlayerColor.White : HexPlayerColor.Black;
 };
 
+// limits clients knowledge in dark hex
 export const reduceCellState = (cellState: CellState): CellState => {
   switch (cellState) {
     case CellState.Empty:

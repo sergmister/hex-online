@@ -28,6 +28,7 @@
   let mcts_data: any = undefined;
 
   onMount(() => {
+    // check if this is an invite link
     const params = new URLSearchParams(window.location.search);
     const game = params.get("game");
     const gameid = params.get("gameid");
@@ -43,6 +44,7 @@
     }
   });
 
+  // connect to game with invite link
   const hexConnect = (game: string, gameid: string, serverAddress: string) => {
     const url = new URL(game, serverAddress);
     const socket = io(url.toString(), {
@@ -91,6 +93,7 @@
     currentGame?.local_move(event.detail);
   };
 
+  // updates state to sync with svelte
   const onHexGameUpdate = (hexGame: HexGame | DarkHexGame) => {
     currentGame = hexGame;
     if (hexGame instanceof HexGame) {
@@ -103,6 +106,7 @@
       }
     } else {
       if (hexGame.win !== undefined) {
+        // display board once game has been won
         lastState = hexGame.currentState!;
       } else {
         if (hexGame.options.playerTypes[hexGame.currentPlayer] === "local") {
